@@ -102,7 +102,7 @@ export default {
         const since = url.searchParams.get('since') || conf.connectedAt;
         if(conf.shop === 'demo') return json(env, req, { orders: demoOrders() });
         const data = await shopify(conf, `orders.json?status=any&limit=250&created_at_min=${encodeURIComponent(since)}&fields=id,name,created_at,cancelled_at,line_items`);
-        const orders = (data.orders||[]).filter(o=>!o.cancelled_at).map(o=>({
+        const orders = (data.orders||[]).map(o=> o.cancelled_at ? { id:String(o.id), name:o.name, cancelled:true, lines:[] } : ({
           id:String(o.id), name:o.name, created_at:o.created_at,
           lines:(o.line_items||[]).map(l=>({ id:String(l.id), product_id: l.product_id ? String(l.product_id) : '', title:l.title, variant_title:l.variant_title || '', quantity:l.quantity, properties:(l.properties||[]).filter(p=>p && p.name && !String(p.name).startsWith('_')).map(p=>({ name:p.name, value:String(p.value) })) }))
         }));
