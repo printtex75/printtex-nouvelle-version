@@ -1,0 +1,3447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Printtex — Nouvelle version (test)</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#23324A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Printtex">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#EFE7D8; --canvas-2:#F7F2E8; --ink:#23324A; --ink-2:#33455F;
+    --thread:#B23B34; --thread-2:#9A2F29; --kraft:#C9A66B; --charcoal:#2A2620;
+    --green:#4B7A5C; --green-bg:#E4EEE6; --amber:#B5791E; --amber-bg:#F5E9D3;
+    --red-bg:#F3DEDB; --line:#D8CBAE; --line-strong:#B9A87F;
+    --shadow: 0 2px 0 rgba(42,38,32,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--canvas);color:var(--charcoal);font-family:'Inter',sans-serif;min-height:100vh;}
+  .wrap{max-width:1400px;margin:0 auto;padding:28px 32px 80px;}
+
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--charcoal);padding-bottom:18px;margin-bottom:16px;flex-wrap:wrap;gap:16px;}
+  .brand{display:flex;align-items:baseline;gap:14px;}
+  h1{font-family:'Oswald',sans-serif;font-weight:600;font-size:30px;letter-spacing:0.5px;margin:0;text-transform:uppercase;color:var(--ink);}
+  .brand-logo{height:46px;width:auto;border-radius:8px;display:block;}
+  @media (max-width:640px){ .brand-logo{height:36px;} }
+  .brand-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--thread);border:1px solid var(--thread);padding:2px 8px;border-radius:3px;letter-spacing:0.5px;text-transform:uppercase;}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;}
+  .stat.clickable{cursor:pointer;}
+  .stat.on{outline:2px solid var(--ink);}
+  .stat{background:var(--canvas-2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;min-width:88px;text-align:center;}
+  .stat .n{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;color:var(--ink);line-height:1;}
+  .stat .l{font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:var(--ink-2);margin-top:4px;}
+  .stat.urgent .n{color:var(--thread);}
+
+  .storage-banner{background:var(--red-bg);color:var(--thread-2);border:1px solid var(--thread);border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:16px;display:none;}
+  .storage-banner.show{display:block;}
+
+  .main-nav{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+  .main-nav button{
+    font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;
+    background:none;border:none;padding:10px 18px;cursor:pointer;color:var(--ink-2);
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .main-nav button.active{color:var(--ink);border-bottom-color:var(--thread);font-weight:600;}
+  .main-nav button:hover{color:var(--ink);}
+  .main-nav a.nav-link{font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;padding:10px 18px;color:var(--ink-2);text-decoration:none;margin-left:auto;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .main-nav a.nav-link:hover{color:var(--ink);}
+
+  .brands-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+
+  .vec-drop{
+    border:2px dashed var(--line-strong);border-radius:14px;
+    padding:64px 20px;text-align:center;color:var(--ink-2);cursor:pointer;
+    background:var(--canvas-2);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    max-width:640px;margin:20px auto 0;
+  }
+  .vec-drop:hover{border-color:var(--ink);}
+  .vec-drop.dragover{border-color:var(--thread);background:var(--red-bg);}
+  .vec-plus{font-size:34px;color:var(--line-strong);margin-bottom:8px;}
+  .vec-drop-title{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:15px;color:var(--ink);letter-spacing:0.3px;margin-bottom:6px;}
+  .vec-drop-sub{font-size:11px;color:var(--ink-2);opacity:0.8;}
+
+  .vec-compare-wrap{max-width:640px;margin:16px auto 0;}
+  .vec-compare{
+    position:relative;width:100%;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line-strong);background:
+      repeating-conic-gradient(#e8e2d3 0% 25%, #f7f2e8 0% 50%) 50% / 16px 16px;
+  }
+  .vec-compare-original{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;}
+  .vec-compare-after{position:absolute;inset:0;overflow:hidden;clip-path:inset(0 50% 0 0);background:#fff;}
+  #vecResultContainer{width:100%;height:100%;}
+  #vecResultContainer svg{width:100%;height:100%;display:block;}
+  .vec-slider-line{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--thread);pointer-events:none;transform:translateX(-1px);}
+  .vec-slider-handle{
+    position:absolute;top:50%;left:50%;width:34px;height:34px;background:#fff;
+    border:2px solid var(--thread);border-radius:50%;transform:translate(-50%,-50%);
+    pointer-events:none;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.25);color:var(--thread);font-size:13px;
+  }
+  .vec-compare input#vecSlider{
+    position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;
+    -webkit-appearance:none;appearance:none;
+  }
+  .vec-labels{display:flex;justify-content:space-between;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-2);padding:9px 4px 0;}
+  #vecStatus{font-family:'JetBrains Mono',monospace;text-transform:none;letter-spacing:0;}
+
+  .vec-controls{max-width:640px;margin:20px auto 0;background:var(--canvas-2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .vec-control-row{margin-bottom:10px;}
+  .vec-control-row label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-2);margin-bottom:5px;}
+  .vec-control-row select{width:100%;font-family:'Inter',sans-serif;font-size:13px;border:1px solid var(--line-strong);border-radius:6px;padding:9px 10px;background:#fff;color:var(--charcoal);}
+  .vec-control-row input[type=range]{width:100%;}
+  .vec-checkbox-row label{display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;font-weight:400;color:var(--charcoal);cursor:pointer;}
+  .vec-checkbox-row input[type=checkbox]{width:auto;margin:0;}
+  .vec-actions{display:flex;justify-content:space-between;gap:10px;margin-top:12px;}
+  .brand-card{
+    background:var(--canvas-2);border:1px solid var(--line-strong);border-radius:10px;
+    padding:16px;cursor:pointer;box-shadow:var(--shadow);
+  }
+  .brand-card:hover{border-color:var(--ink);}
+  .brand-card.quiet{opacity:0.5;}
+  .brand-card.quiet:hover{opacity:0.85;}
+  .brand-card h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:16px;color:var(--ink);margin:0 0 4px;}
+  .brand-card .contact{font-size:12px;color:var(--ink-2);margin-bottom:10px;}
+  .brand-progress{font-size:11px;color:var(--ink-2);margin-bottom:6px;}
+  .brand-oldest{font-size:10px;color:var(--thread);margin-bottom:6px;font-weight:600;}
+  .brand-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;}
+  .brand-bar-fill{height:100%;background:var(--green);}
+  .brand-card-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);}
+  .brand-card-actions button{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;background:none;border:none;color:var(--ink-2);cursor:pointer;}
+  .brand-card-actions button:hover{color:var(--ink);text-decoration:underline;}
+
+  .task-table-wrap{overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--kraft) transparent;}
+  .oi-card{background:var(--canvas-2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:10px;}
+  .oi-card-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;}
+  .oi-cell{flex:1;min-width:110px;}
+  .oi-cell-product{min-width:150px;}
+  .oi-cell-taille, .oi-cell-qty{min-width:70px;flex:0 0 80px;}
+  .oi-cell-blank{min-width:130px;}
+  .oi-cell label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-2);margin-bottom:4px;}
+  .oi-cell input[type=text], .oi-cell input[type=number], .oi-cell select{width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:8px 9px;font-size:13px;background:#fff;color:var(--charcoal);}
+  .oi-cell input.oi-product-other{margin-top:5px;}
+  .oi-card .del-item{background:none;border:none;color:var(--thread);cursor:pointer;font-size:16px;padding:6px 4px;align-self:flex-end;}
+  .oi-sizes-row{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);}
+  .oi-sizes-label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-2);margin-bottom:6px;}
+  .oi-total-badge{color:var(--thread);font-family:'JetBrains Mono',monospace;}
+  .oi-sizes-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;max-width:560px;}
+  .oi-size-cell label{display:block;font-size:9px;font-weight:600;text-transform:uppercase;color:var(--ink-2);margin-bottom:3px;text-align:center;}
+  .oi-size-cell input{width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:6px 3px;font-size:12px;text-align:center;}
+  @media (max-width:640px){ .oi-sizes-grid{grid-template-columns:repeat(4,1fr);max-width:none;} }
+  .oi-slots-row{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);}
+  .oi-slots-label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-2);margin-bottom:6px;}
+  .oi-slots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px;max-width:520px;}
+  .oi-slot{border:2px dashed var(--line-strong);border-radius:8px;background:#fff;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;text-align:center;padding:2px;}
+  .oi-slot:hover{border-color:var(--ink);}
+  .oi-slot.filled{border-style:solid;border-color:var(--line-strong);padding:0;}
+  .oi-slot img{width:100%;height:100%;object-fit:cover;}
+  .oi-slot-label{font-size:8px;text-transform:uppercase;letter-spacing:0.2px;color:var(--ink-2);font-weight:600;line-height:1.1;}
+  .oi-slot-plus{font-size:15px;color:var(--line-strong);line-height:1;margin-bottom:1px;}
+  .oi-slot-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(35,50,74,0.75);color:#fff;font-size:6.5px;text-transform:uppercase;padding:1px 2px;text-align:center;}
+  .oi-slot-clear{position:absolute;top:1px;right:1px;width:14px;height:14px;border-radius:50%;background:var(--thread);color:#fff;border:none;font-size:9px;cursor:pointer;line-height:1;z-index:2;}
+  @media (max-width:640px){ .oi-slots-grid{grid-template-columns:repeat(4,1fr);max-width:none;} }
+  .task-table-wrap::-webkit-scrollbar{height:9px;}
+  .task-table-wrap::-webkit-scrollbar-track{background:transparent;}
+  .task-table-wrap::-webkit-scrollbar-thumb{background:var(--kraft);border-radius:9px;border:2px solid var(--canvas-2);background-clip:padding-box;}
+  .task-table-wrap::-webkit-scrollbar-thumb:hover{background:var(--thread);}
+  .task-table{width:100%;border-collapse:collapse;margin-top:12px;min-width:820px;}
+  .task-table th{text-align:left;font-family:'Oswald',sans-serif;font-size:10px;text-transform:uppercase;color:var(--ink-2);padding:6px 8px;border-bottom:1px solid var(--line-strong);}
+  .task-table td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .task-table input[type=text], .task-table input[type=number], .task-table select{border:1px solid var(--line);padding:6px 8px;font-size:13px;width:100%;}
+  .task-table tr.done td{opacity:0.5;}
+  .task-table tr.done input[type=text]{text-decoration:line-through;}
+  .task-table .col-check{width:34px;text-align:center;}
+  .task-table .col-date{width:80px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-2);white-space:nowrap;}
+  .task-table .col-nom{width:180px;}
+  .task-table .col-blank{width:130px;}
+  .task-table .col-taille{width:90px;}
+  .task-table .col-couleur{width:110px;}
+  .task-table .col-impression{width:150px;}
+  .task-table .col-qty{width:70px;}
+  .task-table .col-remarque{width:180px;}
+  .task-table .col-mockup{width:150px;}
+  .task-table input.task-blank-other{margin-top:5px;}
+  .task-mockup-thumbs{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
+  .task-mockup-thumb{position:relative;width:34px;height:34px;}
+  .task-mockup-thumb img{width:100%;height:100%;object-fit:cover;border-radius:5px;border:1px solid var(--line-strong);}
+  .task-mockup-del{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--thread);color:#fff;border:none;font-size:9px;cursor:pointer;line-height:1;}
+  .task-mockup-add{width:34px;height:34px;border:2px dashed var(--line-strong);border-radius:5px;background:#fff;color:var(--line-strong);font-size:16px;cursor:pointer;line-height:1;}
+  .task-mockup-add:hover{border-color:var(--ink);color:var(--ink);}
+  .task-mockup-dl{width:34px;height:34px;border:1px solid var(--line-strong);border-radius:5px;background:var(--canvas-2);color:var(--ink-2);font-size:14px;cursor:pointer;line-height:1;}
+  .task-mockup-dl:hover{border-color:var(--ink);color:var(--ink);background:#fff;}
+
+  .task-cards-list{display:flex;flex-direction:column;gap:10px;}
+  .done-groups-title{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:12px;letter-spacing:0.4px;color:var(--ink-2);margin:18px 0 8px;border-top:1px dashed var(--line-strong);padding-top:14px;}
+  .done-group{background:var(--canvas-2);border:1px solid var(--line);border-radius:10px;padding:4px 14px;margin-bottom:8px;}
+  .done-group summary{cursor:pointer;padding:10px 0;font-weight:600;font-size:13px;color:var(--ink);list-style:none;display:flex;align-items:center;gap:8px;}
+  .done-group summary::-webkit-details-marker{display:none;}
+  .done-group summary::before{content:"▸";color:var(--ink-2);transition:transform .15s ease;}
+  .done-group[open] summary::before{transform:rotate(90deg);}
+  .done-group-count{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--green-bg);color:var(--green);padding:1px 8px;border-radius:10px;}
+  .done-group .task-cards-list{padding-bottom:12px;}
+  .task-card{
+    display:flex;align-items:flex-start;gap:12px;
+    background:var(--canvas-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  }
+  .task-card.done{opacity:0.55;}
+  .task-card.done .task-nom{text-decoration:line-through;}
+  .task-thumb-wrap{position:relative;flex-shrink:0;}
+  .task-thumb{
+    width:56px;height:56px;border-radius:8px;background:#fff;border:1px solid var(--line-strong);
+    display:flex;align-items:center;justify-content:center;color:var(--line-strong);cursor:pointer;overflow:hidden;position:relative;
+  }
+  .task-thumb:hover{border-color:var(--ink);}
+  .task-thumb img{width:100%;height:100%;object-fit:cover;}
+  .task-thumb-count{position:absolute;bottom:0;right:0;background:rgba(35,50,74,0.8);color:#fff;font-size:9px;padding:1px 4px;border-radius:4px 0 0 0;}
+  .task-thumb-add{
+    position:absolute;bottom:-6px;right:-6px;width:20px;height:20px;border-radius:50%;
+    background:var(--ink);color:#fff;border:2px solid var(--canvas-2);font-size:12px;cursor:pointer;line-height:1;
+  }
+  .task-thumb-add:hover{background:var(--thread);}
+  .task-card-body{flex:1;min-width:0;}
+  .task-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .task-title-row input.task-remarque{
+    width:150px;flex-shrink:0;font-size:11px;font-style:italic;color:var(--ink-2);
+    border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;
+  }
+  .task-title-row input.task-nom{
+    flex:1;min-width:140px;font-family:'Oswald',sans-serif;font-size:14px;text-transform:uppercase;
+    letter-spacing:0.2px;border:1px solid transparent;border-radius:6px;padding:5px 6px;background:transparent;color:var(--ink);
+  }
+  .task-title-row input.task-nom:hover, .task-title-row input.task-nom:focus{border-color:var(--line-strong);background:#fff;}
+  .task-date-badge{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-2);white-space:nowrap;margin-left:auto;}
+  .task-meta-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .task-meta-row select, .task-meta-row input{border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;background:#fff;color:var(--charcoal);}
+  .task-meta-row .task-taille{width:60px;}
+  .task-meta-row .task-couleur{width:100px;}
+  .task-meta-row .task-blank, .task-meta-row .task-impression{max-width:140px;}
+  .task-blank-other, .task-blank-inline-other{margin-top:4px;}
+  .task-qty-block{flex-shrink:0;text-align:center;width:52px;}
+  .task-qty-block input{width:100%;text-align:center;font-size:17px;font-weight:600;color:var(--ink);border:1px solid transparent;border-radius:6px;padding:4px 2px;background:transparent;font-family:'JetBrains Mono',monospace;}
+  .task-qty-block input:hover, .task-qty-block input:focus{border-color:var(--line-strong);background:#fff;}
+  .task-qty-block .qty-label{font-size:9px;text-transform:uppercase;color:var(--ink-2);}
+  .task-actions-block{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .task-actions-block label{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+  .task-actions-block input[type=checkbox]{width:18px;height:18px;}
+  .task-actions-block .done-label{font-size:9px;text-transform:uppercase;color:var(--ink-2);}
+  .task-actions-block .del-row{background:none;border:none;color:var(--thread);cursor:pointer;font-size:14px;}
+  .task-card.out-of-stock{border-color:var(--amber);background:var(--amber-bg);}
+  .stock-badge{background:var(--amber);color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;padding:3px 8px;border-radius:4px;display:inline-block;margin-top:6px;}
+  .task-actions-block .stock-label{color:var(--amber);max-width:64px;text-align:center;line-height:1.2;}
+  .task-progress-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+  .task-progress-track{flex:1;height:7px;background:var(--canvas);border-radius:99px;overflow:hidden;}
+  .task-progress-fill{height:100%;background:var(--amber);border-radius:99px;transition:width .2s ease;}
+  .task-progress-fill.full{background:var(--green);}
+  .task-progress-label{font-size:10px;color:var(--amber);font-weight:600;white-space:nowrap;}
+  .task-progress-label.full{color:var(--green);}
+  .badge-status{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;border-radius:4px;letter-spacing:0.3px;font-weight:600;background:var(--canvas);color:var(--ink-2);}
+  .badge-status.pay-paye{background:var(--green-bg);color:var(--green);}
+  .badge-status.pay-partiel{background:var(--amber-bg);color:var(--amber);}
+  .task-ready-label{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;text-transform:uppercase;color:var(--ink-2);cursor:default;}
+  .task-ready-label input{width:44px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid var(--line-strong);border-radius:6px;padding:3px 2px;background:#fff;color:var(--charcoal);}
+
+  .mockup-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:10px;}
+  .gallery-item{position:relative;aspect-ratio:1/1;}
+  .gallery-item img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--line-strong);}
+  .gallery-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--thread);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1;}
+
+  .tasks-modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .tasks-modal-nav{display:flex;gap:8px;flex-wrap:wrap;}
+  .tasks-modal-phone{display:flex;align-items:center;gap:6px;margin-top:6px;}
+  .tasks-modal-phone span{font-size:13px;}
+  .tasks-modal-phone input{border:1px solid var(--line-strong);border-radius:6px;padding:5px 9px;font-size:12px;background:#fff;color:var(--charcoal);width:220px;}
+
+  .product-form{background:var(--canvas);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px;}
+  .product-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+  .product-form-grid .full{grid-column:1/-1;}
+  .product-form-grid label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-2);margin-bottom:5px;}
+  .product-form-grid input, .product-form-grid select, .product-form-grid textarea{width:100%;font-family:'Inter',sans-serif;font-size:13px;border:1px solid var(--line-strong);border-radius:6px;padding:9px 10px;background:#fff;color:var(--charcoal);}
+  .product-form-grid textarea{min-height:56px;resize:vertical;}
+  .product-img-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .product-img-slot{position:relative;width:64px;height:64px;border:2px dashed var(--line-strong);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;}
+  .product-img-slot:hover{border-color:var(--ink);}
+  .product-img-slot img{width:100%;height:100%;object-fit:cover;}
+  .product-img-slot .plus{font-size:20px;color:var(--line-strong);}
+  .product-img-slot .rm{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--thread);color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;z-index:2;}
+
+  .products-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+  .product-card{background:var(--canvas-2);border:1px solid var(--line);border-radius:10px;padding:12px;}
+  .product-card-img{width:100%;aspect-ratio:1/1;border-radius:6px;object-fit:cover;background:var(--canvas);margin-bottom:8px;}
+  .product-card-name{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:13px;color:var(--ink);margin-bottom:3px;}
+  .product-card-meta{font-size:11px;color:var(--ink-2);line-height:1.5;margin-bottom:8px;}
+  .product-card-actions{display:flex;gap:8px;}
+  .product-card-actions button{font-size:11px;font-weight:600;background:none;border:none;color:var(--ink-2);cursor:pointer;}
+  .product-card-actions button:hover{color:var(--ink);text-decoration:underline;}
+  .product-card-actions button.danger:hover{color:var(--thread);}
+
+  .order-catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+  .order-cat-card{background:var(--canvas-2);border:1px solid var(--line);border-radius:10px;padding:12px;}
+  .order-cat-img{width:100%;aspect-ratio:1/1;border-radius:6px;object-fit:cover;background:var(--canvas);margin-bottom:8px;}
+  .order-cat-name{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:13px;color:var(--ink);margin-bottom:3px;}
+  .order-cat-meta{font-size:11px;color:var(--ink-2);line-height:1.5;margin-bottom:8px;}
+  .order-cat-sizes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .order-cat-size-cell label{display:block;font-size:9px;font-weight:600;text-transform:uppercase;color:var(--ink-2);margin-bottom:3px;text-align:center;}
+  .order-cat-size-cell input{width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:6px 4px;font-size:12px;text-align:center;}
+  .order-empty, .product-empty{color:var(--ink-2);font-size:12px;font-style:italic;padding:10px 0;}
+  .tasks-note{text-align:right;font-size:11px;font-style:italic;color:var(--ink-2);margin-top:12px;line-height:1.4;}
+  .task-table .col-del{width:34px;}
+  .task-table .del-row{background:none;border:none;color:var(--thread);cursor:pointer;font-size:14px;}
+
+  #notepadTab{
+    position:fixed;top:50%;right:0;transform:translateY(-50%) rotate(-90deg);transform-origin:right bottom;
+    background:var(--ink);color:var(--canvas-2);border:none;
+    font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:12px;letter-spacing:0.5px;font-weight:600;
+    padding:9px 16px;border-radius:8px 8px 0 0;cursor:pointer;z-index:70;box-shadow:-2px 0 8px rgba(0,0,0,0.15);
+  }
+  #notepadTab:hover{background:var(--thread);}
+  #notepadPanel{
+    position:fixed;top:0;right:0;bottom:0;width:30%;min-width:280px;max-width:520px;
+    background:var(--canvas-2);border-left:1px solid var(--line-strong);box-shadow:-6px 0 18px rgba(0,0,0,0.15);
+    z-index:71;display:flex;flex-direction:column;padding:18px;
+  }
+  .notepad-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .notepad-header h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:16px;color:var(--ink);margin:0;letter-spacing:0.3px;}
+  #btnNotepadClose{background:none;border:none;font-size:20px;color:var(--ink-2);cursor:pointer;line-height:1;}
+  #btnNotepadClose:hover{color:var(--thread);}
+  #notepadText{flex:1;width:100%;resize:none;border:1px solid var(--line-strong);border-radius:8px;padding:12px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;background:#fff;color:var(--charcoal);}
+  .notepad-status{font-size:11px;color:var(--ink-2);margin-top:8px;text-align:right;min-height:14px;}
+  @media (max-width:640px){
+    #notepadPanel{width:85%;min-width:0;}
+  }
+
+  .quota-widget{
+    position:fixed;bottom:18px;right:18px;z-index:40;
+    background:var(--canvas-2);border:1px solid var(--line-strong);border-radius:10px;
+    padding:9px 12px;width:170px;box-shadow:0 4px 14px rgba(42,38,32,0.18);
+  }
+  .quota-week{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-2);white-space:nowrap;margin-bottom:6px;}
+  .quota-bar-track{height:8px;background:var(--line);border-radius:4px;overflow:hidden;position:relative;}
+  .quota-bar-fill{height:100%;background:var(--green);transition:width .3s ease;border-radius:4px;}
+  .quota-bar-fill.warn{background:var(--amber);}
+  .quota-bar-fill.over{background:var(--thread);}
+  @media (max-width:640px){
+    .quota-widget{width:140px;padding:7px 9px;bottom:12px;right:12px;}
+  }
+  .subbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+  .team-switch{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-2);}
+  .team-switch label.switch{position:relative;width:34px;height:19px;display:inline-block;flex-shrink:0;}
+  .team-switch input{opacity:0;width:0;height:0;}
+  .switch-track{position:absolute;inset:0;background:var(--line-strong);border-radius:20px;transition:.15s;cursor:pointer;}
+  .switch-track::before{content:"";position:absolute;width:14px;height:14px;left:2.5px;top:2.5px;background:#fff;border-radius:50%;transition:.15s;}
+  input:checked + .switch-track{background:var(--ink);}
+  input:checked + .switch-track::before{transform:translateX(15px);}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:22px;}
+  .toolbar input[type=text], .toolbar select{font-family:'Inter',sans-serif;font-size:13px;border:1px solid var(--line-strong);background:var(--canvas-2);border-radius:6px;padding:9px 12px;color:var(--charcoal);}
+  .toolbar input[type=text]{min-width:220px;flex:1;}
+  .check-inline{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);}
+  .btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:none;border-radius:6px;padding:10px 18px;cursor:pointer;transition:transform .08s ease;}
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--ink);color:var(--canvas-2);}
+  .btn-primary:hover{background:var(--ink-2);}
+  .btn-ghost{background:transparent;border:1px solid var(--line-strong);color:var(--charcoal);}
+  .btn-ghost:hover{background:var(--canvas-2);}
+  .btn-sm{padding:7px 12px;font-size:12px;}
+  .view-toggle{display:flex;border:1px solid var(--line-strong);border-radius:6px;overflow:hidden;}
+  .view-toggle button{border:none;background:var(--canvas-2);padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-2);}
+  .view-toggle button.active{background:var(--ink);color:var(--canvas-2);}
+
+  #board{
+    display:flex;gap:16px;overflow-x:auto;padding-bottom:20px;align-items:flex-start;
+    scrollbar-width:thin;scrollbar-color:var(--kraft) transparent;
+  }
+  #board::-webkit-scrollbar{height:10px;}
+  #board::-webkit-scrollbar-track{background:transparent;}
+  #board::-webkit-scrollbar-track-piece{
+    background:repeating-linear-gradient(to right, var(--line-strong) 0 5px, transparent 5px 10px);
+    margin:0 4px;border-radius:5px;
+  }
+  #board::-webkit-scrollbar-thumb{
+    background:var(--kraft);border-radius:10px;
+    border:2px solid var(--canvas);
+    background-clip:padding-box;
+  }
+  #board::-webkit-scrollbar-thumb:hover{background:var(--thread);}
+  .col{min-width:290px;max-width:290px;flex-shrink:0;background:rgba(255,255,255,0.35);border:1px solid var(--line);border-radius:10px;padding:12px;}
+  .col-wide{min-width:min(640px, calc(100vw - 80px));max-width:min(640px, calc(100vw - 80px));}
+  .col-cards-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;align-items:start;}
+  @media (max-width:640px){ .col-cards-grid{grid-template-columns:1fr;} }
+  .col-cards-grid .tag{margin-bottom:0;}
+  .col-archive{background:rgba(200,190,170,0.25);border-style:dashed;}
+  .col-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px dashed var(--line-strong);}
+  .col-head h3{font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;margin:0;color:var(--ink);}
+  .col-count{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--ink);color:var(--canvas-2);border-radius:10px;padding:1px 8px;}
+  .col-empty{font-size:12px;color:var(--ink-2);opacity:0.6;text-align:center;padding:20px 4px;font-style:italic;}
+
+  .tag{position:relative;background:var(--canvas-2);border:1px solid var(--line-strong);border-radius:8px;padding:14px 14px 12px 22px;margin-bottom:12px;box-shadow:var(--shadow);cursor:pointer;}
+  .tag.is-archived{opacity:0.55;}
+  .tag:hover{border-color:var(--ink);}
+  .tag::before{content:"";position:absolute;left:9px;top:16px;width:9px;height:9px;border-radius:50%;background:var(--canvas);border:1px solid var(--line-strong);}
+  .tag::after{content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom, var(--line-strong) 0 4px, transparent 4px 8px);}
+  .tag-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-2);margin-bottom:2px;}
+  .tag-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+  .tag-product{font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;color:var(--ink);text-transform:uppercase;line-height:1.2;}
+  .tag-qty{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--thread);white-space:nowrap;}
+  .tag-client{font-size:13px;font-weight:600;margin:2px 0 8px;}
+  .tag-imgs{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+  .tag-imgs img{width:34px;height:34px;object-fit:cover;border-radius:4px;border:1px solid var(--line-strong);}
+  .tag-imgs .more{width:34px;height:34px;border-radius:4px;border:1px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-2);}
+  .tag-meta{font-size:11px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
+  .tag-items{background:var(--canvas);border-radius:6px;padding:6px 8px;margin-bottom:8px;}
+  .tag-item-line{font-size:10.5px;color:var(--ink-2);line-height:1.5;}
+  .tag-meta span b{color:var(--charcoal);font-weight:600;}
+  .badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:4px;letter-spacing:0.3px;font-weight:500;}
+  .badge-method{background:var(--kraft);color:#3d2f14;}
+  .badge-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
+  .deadline{font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;display:inline-block;}
+  .dl-normal{background:var(--green-bg);color:var(--green);}
+  .dl-soon{background:var(--amber-bg);color:var(--amber);}
+  .dl-over{background:var(--red-bg);color:var(--thread-2);}
+  .dl-done{background:#e6e6e0;color:#71695a;}
+  .pri-haute{background:var(--red-bg);color:var(--thread-2);}
+  .pri-basse{background:#e6e6e0;color:#71695a;}
+  .pay-paye{background:var(--green-bg);color:var(--green);}
+  .pay-partiel{background:var(--amber-bg);color:var(--amber);}
+  .pay-nonpaye{background:var(--red-bg);color:var(--thread-2);}
+  .warn-start{background:var(--amber-bg);color:var(--amber);font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;display:inline-block;margin-top:4px;}
+  .tag-actions{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px;margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;}
+  .tag-actions button.notify{color:var(--green);font-weight:700;}
+  .tag-actions button.notify:hover{color:var(--thread);}
+  .tag-actions button{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;background:none;border:none;color:var(--ink-2);cursor:pointer;padding:2px 4px;}
+  .tag-actions button:hover{color:var(--ink);text-decoration:underline;}
+
+  table{width:100%;border-collapse:collapse;background:var(--canvas-2);border-radius:8px;overflow:hidden;}
+  thead th{text-align:left;font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-2);padding:10px 12px;border-bottom:2px solid var(--charcoal);}
+  tbody td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:hover{background:var(--canvas);}
+  tbody tr{cursor:pointer;}
+  tbody tr.is-archived{opacity:0.5;}
+
+  .empty-state{text-align:center;padding:70px 20px;color:var(--ink-2);}
+  .empty-state h2{font-family:'Oswald',sans-serif;color:var(--ink);text-transform:uppercase;font-size:20px;margin-bottom:6px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(35,50,74,0.45);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--canvas-2);border-radius:12px;width:100%;max-width:820px;padding:26px 28px 28px;box-shadow:0 12px 30px rgba(0,0,0,0.2);}
+  .modal h2{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:20px;color:var(--ink);margin:0 0 4px;}
+  .modal .sub{font-size:12px;color:var(--ink-2);margin-bottom:18px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+  .form-grid .full{grid-column:1 / -1;}
+  label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-2);margin-bottom:5px;}
+  input, select, textarea{width:100%;font-family:'Inter',sans-serif;font-size:13px;border:1px solid var(--line-strong);border-radius:6px;padding:9px 10px;background:#fff;color:var(--charcoal);}
+  textarea{resize:vertical;min-height:56px;}
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--ink);outline-offset:1px;}
+  .qty-row{display:flex;gap:8px;}
+  .qty-row input{width:70%;}
+  .qty-row select{width:30%;}
+  .hint{font-size:11px;color:var(--ink-2);margin-top:4px;}
+  .hint.strong{color:var(--amber);font-weight:600;}
+
+  .sizes-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+  .sizes-grid div label{text-align:center;}
+  .sizes-grid input{text-align:center;padding:8px 4px;}
+
+  .history-box{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px;max-height:110px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--kraft) transparent;}
+  .history-box::-webkit-scrollbar{width:8px;}
+  .history-box::-webkit-scrollbar-track{background:transparent;}
+  .history-box::-webkit-scrollbar-thumb{background:var(--kraft);border-radius:8px;border:2px solid #fff;background-clip:padding-box;}
+  .history-box .hrow{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px dashed var(--line);}
+  .history-box .hrow:last-child{border-bottom:none;}
+  .history-box .hrow span:first-child{color:var(--charcoal);}
+  .history-box .hrow span:last-child{color:var(--ink-2);}
+
+  .slots-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .slot{border:2px dashed var(--line-strong);border-radius:8px;background:#fff;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;text-align:center;padding:4px;}
+  .slot:hover{border-color:var(--ink);}
+  .slot.filled{border-style:solid;border-color:var(--line-strong);padding:0;}
+  .slot img{width:100%;height:100%;object-fit:cover;}
+  .slot .slot-label{font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:var(--ink-2);font-weight:600;line-height:1.2;}
+  .slot .plus{font-size:18px;color:var(--line-strong);line-height:1;margin-bottom:2px;}
+  .slot .slot-name-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(35,50,74,0.75);color:#fff;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;padding:2px 3px;text-align:center;}
+  .slot .clear-btn{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--thread);color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;z-index:2;}
+  .extra-imgs-label{display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;margin-bottom:6px;}
+  .img-drop{border:2px dashed var(--line-strong);border-radius:8px;padding:12px;text-align:center;font-size:12px;color:var(--ink-2);cursor:pointer;background:#fff;}
+  .img-drop:hover{border-color:var(--ink);}
+  .img-preview-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .img-preview{position:relative;width:56px;height:56px;}
+  .img-preview img{width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid var(--line-strong);}
+  .img-preview button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--thread);color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1;}
+  .weight-meter{font-size:11px;color:var(--ink-2);margin-top:8px;}
+  .weight-meter.warn{color:var(--thread);font-weight:600;}
+  .weight-bar{height:4px;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden;}
+  .weight-bar-fill{height:100%;background:var(--green);transition:width .2s ease;}
+  .weight-bar-fill.warn{background:var(--thread);}
+
+  .modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:22px;flex-wrap:wrap;gap:10px;}
+  .modal-actions .left, .modal-actions .right{display:flex;gap:8px;flex-wrap:wrap;}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--canvas-2);font-size:13px;padding:10px 18px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:60;}
+  .toast.show{opacity:1;}
+
+  #printArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:24px;}
+    #printArea h2{font-family:Georgia,serif;}
+    #printArea .p-imgs{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;}
+    #printArea .p-imgs figure{margin:0;width:130px;text-align:center;font-size:11px;}
+    #printArea .p-imgs img{width:130px;height:130px;object-fit:cover;border:1px solid #999;}
+    #printArea table{width:100%;border-collapse:collapse;margin-top:10px;}
+    #printArea th{text-align:left;padding:6px 8px 6px 0;border-bottom:2px solid #333;font-size:11px;text-transform:uppercase;}
+    #printArea td{padding:6px 8px 6px 0;border-bottom:1px solid #ccc;font-size:13px;}
+  }
+
+  .auth-gate{position:fixed;inset:0;background:var(--canvas);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+  .auth-card{background:var(--canvas-2);border:1px solid var(--line-strong);border-radius:14px;padding:34px 30px;max-width:360px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,0.14);text-align:center;}
+  .auth-card h2{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:19px;color:var(--ink);margin:0 0 4px;letter-spacing:0.4px;}
+  .auth-sub{font-size:12px;color:var(--ink-2);margin-bottom:20px;}
+  .auth-card form{text-align:left;}
+  .auth-card label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-2);margin-bottom:5px;}
+  .auth-card input{width:100%;font-family:'Inter',sans-serif;font-size:13px;border:1px solid var(--line-strong);border-radius:6px;padding:9px 10px;background:#fff;color:var(--charcoal);margin-bottom:12px;}
+  .auth-card input:focus{outline:2px solid var(--ink);outline-offset:1px;}
+  .auth-error{color:var(--thread);font-size:12px;margin-top:12px;min-height:16px;}
+  .auth-divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--ink-2);font-size:11px;text-transform:uppercase;}
+  .auth-divider::before, .auth-divider::after{content:"";flex:1;height:1px;background:var(--line-strong);}
+  .btn-google{display:flex;align-items:center;justify-content:center;background:#fff;}
+  .auth-switch{font-size:12px;color:var(--ink-2);text-align:center;margin-top:16px;}
+  .auth-switch a{color:var(--ink);font-weight:600;text-decoration:underline;cursor:pointer;}
+  .brand-portal-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 24px;border-bottom:2px solid var(--charcoal);background:var(--canvas-2);
+  }
+  .brand-portal-name{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:16px;color:var(--ink);letter-spacing:0.4px;}
+  body.role-brand #tasksOverlay{
+    position:static;background:none;display:block;padding:24px;max-width:1020px;margin:0 auto;
+  }
+  body.role-brand #tasksOverlay .modal{max-width:100%;box-shadow:none;border:1px solid var(--line);}
+  body.role-brand #btnTasksClose{display:none;}
+  @media (max-width:640px){
+    .form-grid{grid-template-columns:1fr;}
+    .slots-grid{grid-template-columns:repeat(3,1fr);}
+    .sizes-grid{grid-template-columns:repeat(4,1fr);}
+    .wrap{padding:18px 14px 60px;}
+    header{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div style="background:#B3261E;color:#fff;text-align:center;font:600 13px Inter,sans-serif;padding:6px 10px;">Version de test : les données sont séparées de l'appli en service.</div>
+<div id="authGate" class="auth-gate">
+  <div class="auth-card">
+    <div id="authLoginBlock">
+      <h2>Connexion</h2>
+      <p class="auth-sub">Accès réservé. Connecte-toi pour continuer.</p>
+      <form id="authForm" novalidate>
+        <label for="authEmail">Email</label>
+        <input type="email" id="authEmail" required placeholder="ton@email.com" autocomplete="username">
+        <label for="authPassword">Mot de passe</label>
+        <input type="password" id="authPassword" required placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="btn btn-primary" id="btnLogin" style="width:100%;margin-top:14px;">Se connecter</button>
+      </form>
+      <div class="auth-switch"><a href="javascript:void(0)" role="button" id="linkForgotPassword">Mot de passe oublié ?</a></div>
+      <div class="auth-divider"><span>ou</span></div>
+      <button type="button" class="btn btn-ghost btn-google" id="btnGoogleLogin" style="width:100%;">
+        <svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:-3px;margin-right:6px;"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.3 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 19 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.3 29.5 3 24 3c-7.6 0-14.2 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.4 0 10.3-2.1 14-5.5l-6.5-5.5C29.4 35.6 26.8 36.5 24 36.5c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.7 40.5 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.5 5.5C39.6 37.4 42 32 42 26c0-1.9-.2-3.7-.4-5.5z"/></svg>
+        Se connecter avec Google
+      </button>
+      <div class="auth-switch">Tu es une marque ? <a href="javascript:void(0)" role="button" id="linkShowSignup">Créer un compte marque</a></div>
+      <div class="auth-error" id="authError"></div>
+    </div>
+    <div id="authSignupBlock" style="display:none;">
+      <h2>Compte marque</h2>
+      <p class="auth-sub">Renseigne tes infos pour accéder au suivi de tes commandes.</p>
+      <form id="signupForm" novalidate>
+        <label for="signupEmail">Email</label>
+        <input type="email" id="signupEmail" required placeholder="ton@email.com" autocomplete="username">
+        <label for="signupPassword">Mot de passe</label>
+        <input type="password" id="signupPassword" required placeholder="6 caractères minimum" autocomplete="new-password">
+        <label for="signupBrandName">Nom de ta marque</label>
+        <input type="text" id="signupBrandName" required placeholder="Ex. Studio Delacroix">
+        <button type="button" class="btn btn-primary" id="btnSignup" style="width:100%;margin-top:14px;">Créer mon compte</button>
+      </form>
+      <div class="auth-switch">Déjà inscrit ? <a href="javascript:void(0)" role="button" id="linkShowLogin">Se connecter</a></div>
+      <div class="auth-error" id="signupError"></div>
+    </div>
+  </div>
+</div>
+<div id="brandPortalHeader" class="brand-portal-header" style="display:none;">
+  <span class="brand-portal-name" id="brandPortalName"></span>
+  <button type="button" class="btn btn-ghost btn-sm" id="btnPortalLogout">Déconnexion</button>
+</div>
+
+<button type="button" id="notepadTab" style="display:none;">À commander</button>
+<div id="notepadPanel" style="display:none;">
+  <div class="notepad-header">
+    <h3>À commander</h3>
+    <button type="button" id="btnNotepadClose">×</button>
+  </div>
+  <textarea id="notepadText" placeholder="Note libre… (papier, encre, blanks manquants…)"></textarea>
+  <div class="notepad-status" id="notepadStatus"></div>
+</div>
+
+<div class="wrap" id="appRoot" style="display:none;">
+
+  <header>
+    <div class="brand">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABLAAAAJ0CAMAAAA1ViplAAABAWlDQ1BpY2MAABjTY2BgXJGTnFvMJMDAkJtXUhTk7qQQERmlwH6HgZFBkoGZQZPBMjG5uMAxIMCHASf4dg2oGggu64LMYiANcKakFicD6Q9AHJ9cUFTCwMAIsounvKQAxI4AskWKgI4CsnNA7HQIuwHEToKwp4DVhAQ5A9k8QLZDOhI7CYkNtQsEWJONkjORHZJcWlQGZUoB8WnGk8zJrJM4srm/CdiLBkqbKH7UnGAkYT3JjTWwPPZtdkEVa+fGWTVrMvfXXj780uD//5LUihKQZmdnAwZQGKKHDUIsfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsOw8A8P1N2yX7ruEAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAoJQTFRFAAAAAQEBsLCw4ODg3Nzc29vbf39/BQUFAgICq6ur2dnZ3d3d5eXl19fX+vr6/f39////09PTz8/P4uLi/Pv8+fn5AwMD/v7+5OTk3t7e4eHhBgYGCQkJBwcH+Pj46+vrc3NzjY2Nd3d3hYWFjIyMi4uLjo6O8vLyS0tL9fX1SUlJTExMkJCQiYmJ6Ojoj4+PT09PCAgISEhI6enp5+fnh4eH1tbW2traCgoKR0dH7u7uqKiooKCge3t7wsLCqqqq9/f38PDwRkZG8/PziIiIurq6tra2v7+/m5ubenp6ZmZmtLS0xcXFnZ2daGho1dXVvb29lpaW8fHxRUVFwMDAnp6epaWloaGhy8vLbW1teHh4Tk5O4+PjY2NjrKysp6an1NTUampqsbGxTU1Nu7u7qampl5eXeXl5ubm5srKya2trkpKSnJycoqKiYmJiYWFhZWVlmpqazs7ORERE0tLSzc3Ns7OzxsbG7OzsyMjIaWlpgICAwcHBlZWVk5OT9vb2t7e37+/v6urqmZmZFhYWgoKCdnZ2UlFSDQ0NGhoaVVVVHBwcKCgohoaGMDAwhISEPT09V1dXUFBQW1tbzMzMo6OjcnJyvr6+Xl5ebGxsr6+vIiIiuLi4Pj4+Nzc3NjY2HR0d0NDQycnJb29vcHBwfX19Ozs7dHR0ODg4JSUlOjo6fn5+lJSUJCQkKysrLS0tISEhWFhYgYGBFRUVERERX19fXFxcx8fHVFRUFxcXDAwMKioqZGRkHh4eKSkpra2tGxsbMTExWlpapKSkExMTQkJCFBQUOTk5Dw8PNDQ0QEBADg4OEBAQJiYmcXFxHx8fU1NTxMTEMjIyMzMzVlZWXV1d19bA+QAAAAFiS0dEEJWyDSwAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAAHdElNRQfqCAUVOTU+fwG1AAABQ3pUWHRSYXcgcHJvZmlsZSB0eXBlIGljYwAAKM+dUtttwzAM/NcUHYFviuNYUgR0/wVK27LRFMlHejAgmI8T78Ty3Xv52iEkBXbgVq0b23AGwiNkwx4uTkriQgRaNXQjAB9978gv8mQAypOjGBo7OwgqKEiHf2DmreVkPzGYxj3Zhygf1oeJqbOti+YK6ywpDJxcTq9uad09HYIrrhVWQbp2uHX+Wr/ixfx3YtVnwp4aQn4RST7AORHCIhLYiV4m7E3Ds7QbmtKY0t54Z0pK15Ruz1HclgMNsAckcQENgmoN2jQEnqiK2FgIJ1JkDWHlFiQGmXHX8RjW0r0tVysaxuZ96xalTR+DOz+CYSZ8H70uk3cxLLzruBfyz/5c61Ou/XlVaPMMcJ16BDheElqOfhA1r3o+2theFZIsS2Y9Jm3WZ/kBFCy27zRVavsAAAABb3JOVAHPoneaAAAApmVYSWZJSSoACAAAAAYAEgEDAAEAAAABAAAAGgEFAAEAAABWAAAAGwEFAAEAAABeAAAAKAEDAAEAAAACAAAAPAECAAkAAABmAAAAaYcEAAEAAABwAAAAAAAAAEgAAAABAAAASAAAAAEAAABpbWFnZXJ5NAAABAAAkAcABAAAADAyMTABoAMAAQAAAP//AAACoAMAAQAAALAEAAADoAMAAQAAAHQCAAAAAAAAKdfKpAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyNi0wOC0wNVQyMTo1Nzo1MyswMDowMNvuQgsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjYtMDgtMDVUMjE6NTc6NTMrMDA6MDCqs/q3AAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDI2LTA4LTA1VDIxOjU3OjUzKzAwOjAw/abbaAAAABV0RVh0ZXhpZjpDb2xvclNwYWNlADY1NTM1M3sAbgAAABN0RVh0ZXhpZjpFeGlmT2Zmc2V0ADExMmpZGOYAAAAVdEVYdGV4aWY6RXhpZlZlcnNpb24AMDIxMLh2VngAAAAZdEVYdGV4aWY6UGl4ZWxYRGltZW5zaW9uADEyMDDEGiTqAAAAGHRFWHRleGlmOlBpeGVsWURpbWVuc2lvbgA2Mjjin10uAAAAEXRFWHRpY2M6Y29weXJpZ2h0AENDMP3UVi0AAAAUdEVYdGljYzpkZXNjcmlwdGlvbgBjMmNp/wr3XgAAABB0RVh0dW5rbm93bgBpbWFnZXJ5NF9znN0AACURSURBVHja7d2JoxzFYefxKp5EF3rQXaCebqTRjBBIDwSS4CEhcQR4QhKnDLICBMxhTMCQ4NgYc0gGW5ZiiC8cH4CwwyY24LXxlQQ7YO/6iJ3dOMeud9nN/j/b3XP2TNW8ObqnW5rvB2Oennp6qud1/15VdXWVEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4CQliy4AAAx2ytyK2MpTHSW7FF0szLbTVs2fPhc5teiCoGTOcL2YPlNIAgtlMa8bzhLSKbosKJM5r3FmrHYEgYWymNN+JT4tzxBB0UVBmQSrvDCmz278IiOwUAatGtYZir5VdJvzk8TSazrfIrBQtDXNwFpbdEFQMgQWSojAghmBhRIisGBGYKGECCyYEVgoIQILZgQWSojAghmBhRIisGA25xFYKJ04sOLzksCacU48clgGUirVCKV53RjqvloE7aAirjBlgVCpP68Mk7wKV3cNHJUOJ+bsqcYj2pVQkTigqs3A8leI9jNb0TmyruhiYsZEeaW6tEa6z0dJ1nn6olZ0KTFtgVMV8xVd1/38zpdnF11MzBjV6bbqETaeHYu7LdYXXUoU4ZzoHPA83/PC+Hxo/H/0XzdsnyJabyi6kJg151b0Mnx9XtGFRAE2NGMpbMdTs4OzHVihR2BhutTG3ppV88Rs/0qNbCq6lChAT2BpAgvFI7BgQWChfAgsWBBYKB9zYIUE1sxTC6lzIOnDiiLK60ow310oupSYMXJBu67vN4Yxx6dj85eo1x1iG5gueRadr+MTo3Fq1MPQbdwl7JwWrrf+gqLLiJmTvkuYqv83bb6QkaOzphb9Lrtow6YtWyObIhvXu0lUudsWFjY1LVx8SdHFxIwJFsWlGyOtc3B7M752nLflso1NC5cqJnifTdX2V3K+8avMmwu6TobWczvA1EjV9QjrnNfoodgpOqtQ1CR5NfNagaXXqsl3Bkyg+6H71qM5awUP46MLgYWyILCwLAILZUFgYVkEFsqCwMKyCCyURffK4yvCxsAGJvBDCoGFsiCwsCwCC2VBYGFZXYFFPwGKJAksLG9XY+5sPXe56j5hii4WykhdMX9laHpoJuXsq+J52NUf7Ai12/remqt7diWD4JptnYdaK2c0RoW2zr81zb+Yk2qx6KNGmexoBtbK9K+4oouFMgo2LR9XkdVSKlG7dql7293XVdO7Utd2v6Sy5/LknGudf+ubDxOuENWxSoqT1UrdWubLIbAwkBR7h4gr7c2vS1Ze2t71RL2r96Wfq1m8Yk9q0pDr0zWstc1vzwWciuiibnDrSWDdKGkSYqB1Qm4cJrCialGUV6p2k+40CSM3p/d2i653TdJ9elwpE53A2u/q5PHn9yluBqGLNH4JmAwZWGubuXO9154lJvrvru4TTN2aTMDWmIwt+nchCjg5QNFHDuDEM1JgCbGnFVjJfLYLXbkT3OZ3z3J7INWBRWAByMCIgbUl7KzJFC8r2JnC6P2tbya1r4N/KAfGFYEFYHSjBVZV3N4VWGF4fWeEwtm+1wys6H/uHdIRQhFYALKUDqzQzF3ZmHpdiuC63W67Vag977rGXhx1Z9hc0FmHXhJwyfYEFoAMpQIrXkDcaK6xsQoC+Ud+92Csu5ImYS24aKkVbl7095W7AwILQOaGqmHplbXG1lUpardpv729pz8Qf1uKfWHz5VG6+Uu39AxpILAAZCEVWAsWG7qHiN5T73qFd2/8LXlfI8QafVhL21qbElgAspQKrOFecn+qUvbBdUI4D6Se79nLCEAAeRg9sAK5uvs1u68Q1Q1+93dup/oEIBejB5ZSH9rdtUiv/6CQ93btw9/zx1SwAORi1MCSUqrgoe41nf37Hk61ET8csNgggFyMXMNKRoPu6Kpi6Z2p+JoTgVP0QQE4OY0cWMkdvkdao9ojbtjuwQpdXb9PMBsDgHyMFVhV9ajXCqzu/nZPh39CexBAXsarYSmxOx4j2kipSrt9GOodRR8PgJPYwIGjWy9e+NN4o+67fjLpdhePec3pRbumlIls4gYhgNwMfjTH0/VLe7qkkhqWVOqapc5L2q+/gZWaAORn4MPPYejrjXJd6gVJDSsKsYuu1H01rPoVRR8OgJPZwPmwfF1xN/S8II6rKLCU/EhjRYruwPozIelzB5CbZSfw22Kch0/IRXFG6oGcKLXmoyQLeLgZQF7GDiwRXOCnt9zz0bjuRWAByMuYgRU1DOXHlno2fZzAApCnIQLLWMGSQu2qp7f01hBYAPI0cFhDnEKbmqOwuvMqXmy++nHtpsdgaf1gcxV6AgtAHgYOa1jSXn2jSPIpFVjx44LxxKO9gXX+442bhAQWgDwMrGH5ofYvaC4t3x1YTvTHJ3R/YOlVsr34RNEHBuDkM/DRnA0XP3ahEJ1aU7vDXaj3aV8nC3ulhzbc2N626AMDcPIZ4uHn/hpWoD7hh82FCLV22zWtsHL+Ja1tiz4wACefoWdrSA9peFJ3dcy3A6vih08FgsACkI+xAku8z28Fldbxl+25sep6QyDWEVgA8jBWYF2wx+1ah/DpuaR7vmnbhdSwAORj9MASwjmgO33t7r3y1DCseO3u9xscAgtALkYOLKHkxVp3LUJxmRDPeK7fDiz/kWTjog8MwMln9BqW+uNDYVdeHRbSucjVlVZg1fXqgMACkIeRAksl0yNfkxoreoEIHHlV3J/V+HNFh9dHW7N0DoDMpQJLWYh4gfpkhLsjxV6303+l9f1xjDlidSextBd+kon8AOQgFVjSRqhmDUuIS/eE7cTy/PkkyETwbFdgab3GYXFCANlbdnqZpB/94M2LjW4pqbobhJv1qUmQBcJ5rjuw9C2CPiwAmRu8ak5TxfuUaA5p+LSXtARbPe7tmtcVqcDyLy36uACchIaqYWm90BpbdbAdS74XuteJdl/VnRV9pL15/YGijwvASWi0wKp+xtOtQaO+1qd1dVXV5rq39/5oUdAsBJCt0QLrkWRqhmbzUa9KerWaO1Ibumea8eqXcqcQQMZGC6yjbth5KqdydRAPc2h7stMV5unw9uZMpQCQleEDK9r4lnqnFuV5t6dncBDXuamXbHBoEwLI1NCBJRznpnp3q8+9KLX+V5ROT6d6sQ7eQ2AByNTwgSWcban5kB9OTTkjpFOVx1KvOYUHCgFkaoTAOi31nduq6RVWow3Un6eqWP59BBaA7Ch5c6Xiur7veeEA3sEPRRv/ufaizRphVD9yas/iFPHXwWd0Jel0T5bc2fxJAgtAZqQjZBAEKhmeMICoxUMUkjFXXas6pxdYbe6yJlvP8PA0IYAMSSWcYJipq5KFJarKCRpr0Ud/UkEgHKc76Ez7p4YFIDuqVUtSUQLZxSunqiCuNbXqTUGtd/mv+Ov4m04kfknRhwbgZNNq3BlqSP3tws52jf9K83bMNgogT8OGTDqwOt8jsABMDYEF4IRBYAEAAAAAAADACFQypm/w4xct8VhmIRwRr4857P5lvP1I4u1VIC7P4BgcYezotZVJDT8PpgyUqQM5/cyJrIkc17TKdtLOYJSjBwrUnP1xqMCKrj8nGOXMDgzhMPDZtMX4Go8fNxvphpLxGJIh2IbAistkGLQdva9Sw75rTTRGd3cLRM2R3XOZRymg4oHdw/w2GFLXdOhq8r1177fqODzjhxPAZ5+PbBzCeZEX/uJzThQEQ9+flsHnr76sx94Bnj/nC190gpGvHOMxPPul9gO3fWXaavDi44sjvOWX/7K37Ju27v1K+t0CdcneDVuH+WyH9VWn+RtABV/Lcr8Ll235uqiRWCg5KS69N54lxPOX05w/xNfHbnvp5VeGrv9ct9bvnZJk8PxKvr5y1/Frb5XDt3lsx6B3v+qYAisuk/m9t39o2Pd0vrHk9r66orW3UXRV0pT8iHZdb7h5pYb0zdYxX7s5y9362nNPEUy1jtI7rpcPkX5HzrzqOpl00ciBLZ7Fh0JvtMBq8Da/dONf1eLQGqahcrvxGCreE+bQe838ntEO6v9pyF6nxTPN+9guqp2Bk+qvK+N8tgO59zR2/jdLme42mabqUlazQck54syxAktH9Yb5x74V7yIY1Jkivu254wRWrPL63VUl1LK99oE4yzPtN1yaN7/gttBcw4p28dyQfc9yrWsuc1eFTok36lkHlued23iDN7PNwaSc3yn6bASWUZNrxgms5va7r/3PouoM7MxdoceqYcVvEbreik3V5ZuGVbHSN+63st24vfq2Npch3sfeIRu72yrmYneXVl3tZR5YeiGpAgZ3u5XJ95Y69NDbVPTZCCwnWOWPdVHVdbLC756XvzXw7pNzW3Na3BEDq7GR73lr3ly+hlXdZQkGc2DJM21vGu3jyk84Q80vd7o219KkrLXfJ/ium3mTUF/W2Pkj2e41aRJuKPpkBJah1G0T1gJ2PBvfvbfWsHaO1+fcKlAYHrnre/Ggg66+sr6DkKss5TcHljgjHPC++5PxEOlb/gaHtPHAvNSHe24ONaytjU62m8LxftEMsmn4h52BQih523h9WB2bD7wla1kHVkcYHjwv6QmX0wksN343qZYPLHOgpD7cc0fqsxtGzoElCSyUmpQ7Jwssz9f+6o+K/AIrahiGpzWKOoXAisx9P0gfjnEfBQZWUiYCC7No0sAKk/uFu3+QZ2CFrn7qr4QIphJYUXEP9AwiN+6DwAKKsHOiczxs/Ov9UCpjH5M8I5tratePZDtG+g4h2xqW1i86YtzACrtfF3wgk2PvRmBhxk0WWM3LVIdbhZNnYOlVP55aYB05+rcEFlBOZ2RzsrsvqjwDy9NPrptaDUsfqBJYQCllE1gVb8/j8YwruQWW5z00rcAKtfe8lFIQWEDpZBNYfqjv/bLhObzMmoQ69LYIyyLnmdew9NzfNR8EJrCAUsmoSRjZbxiTnl1gab3n78W0Aks/17V6sXEfBBZQhOwCS3+nP1CyDKzwAcsy5zkEln6hUZsjsIBSySywfH3wLdE7UWiWgeV6nzZP2JRHYB17a/A8M8UFVmM82k1h9s8p8mgOyi/DGpb3sBA9EyhnGVgVveNbgVg3hbuEcTBcP3iWiGECK+snlONy1fc27j284Gdfw3pxtHmpgQJkF1hu3f3r3kZFloEVuSqomnr2sw+sMDxyTnXQZH7DBJZ6O8tjb9rSqAX9QGc+ij5cGGm6fqAIGdawQvebvWd8xoF19CemOkAeTUKt574YDKhxDBFYsvpmlsfe9GwjsL6hJ31ovb/s36mNusQRMG3ZBVboe0d+mmMfVlSH82809bvnEViep28ZtETZMDUs55LlPrExPoN/aOz7Ip19k/Cd4ZdvAwpiCyzv7O09NnuuF+pKxbed8F4YXtzTZ2sNrPNfPu3hhx++6qoPdtxxyrur6nH3kWd9B71WGOYdzyWwon/fHPCxDdWHJZ6Icq+Snr6wsVaGF31WFcscgKGO/94zPzV+VuMJpUDstxbdPHlzPAF06LvmFUZCHf1sX+qajx4oKUtghdv678gFry48sdS8psyXRNi77IMtsMJ7ncB0Q+qLlz0VV9Xqtoux/rPaVDrdE3M/tX9sQ9WwhPPDA48efyjlwIHjx284fiD66nzL1PJHDzz33PHIAYNP/bx5J8/5L4/Fe9tncvstttIdPW7x6P7Xbvy70Ve9BabNVsM6athWKvFf71jv2Zoi0ffrb/W8whYO2wNjYEV+Ma8965w03mmmYuUTWL4+ZZI+rMZ2AyJgm+UwV0ohHcexLeoa71upeHYMZZ7pNXrPecshzUuzZFbomlA1AZSbObDC8Mq+LRej1kggxS8ftdV/4iDbmF40wh5YyhBYyklWVL52QIqscqZXw9KVW60f21DjsKL2a1X0rDLdCBmlgmDOM5djV3MmHeP7NhaSbqyuZimaEtbAetIaWKLxJGhhpyEwHHNgeXqH/eT9wWbrFR/uc1JNSWuTcIf9DpwSH3St+3d/1f+C3AJLr1q3WBt5pPuwn/xqSz1y1cQ/U7nacjxnMDAUJzhLDWtQYKlzj1ov8Z3D1bAGBZZQ6jVbt7vvPdK/fX6BpX9tK2MWgWUpRn6BFRJYONGNEVhCXFzR5n6sMPz85DUsR/7jvNaW+sf9/S/IMbD8Vy2FJLCAIowRWEGgVunQHCj+falNx6phRTZ55rvzoffudIY1tKxZFMaSElhAEUYPrPgv3qlYhjb4WyZvEkYCW7exPt1QoBwDS98Z90Zf3tNDTWABxRirSSiiKpb5deGfpW7kjxtY6n5bIO6Zbg3LW2o0CgksoAzGCyzxfssloR/NJLDEh8z7r4f1/m1zrWFV5uIhBIrAAspgvMCqXmK+2jz9+sSd7ol1FePr/ND/ft+2+QaWd6cQgiYhUApjNgnFQcvrnsqmhiXutVzO4df7Ns0xsMKokXv+qw5NQqAcxg4s87CGvAMr1P0DDfIMrIi/Si4SWEApZB5YmdwltAWW7+n7+jbNObBc/w5qWEA5jBdY0h5YqWk6Jwgs4+sqvn68vzD5BpbW3s+iwFIEFlC4Me8SftkyEL1+eKiFVJcd1qDOt1xz+oK+jbMJrEGz4T0ggsYzhQQWUKgxa1gvWObxcx9KbzduYP2NZ8uPH/UXJqMa1jF7Yt3YeisCCyjSeIEVvGabxC89YdXYTcK9luk4td8/Z1NGgRW+/4g1sJYubBSXwAIKNcajOUoI55BtQvI70tuOE1jx39zlGl/o6mP5jXR/4U7rxIFLt4nWXFQEFlCcMQIrcKpvW2dTOGfyTncnkL/ZbJ4Sy/WfzK2GpW8Sa2zT2tT1+4N4LWgCCyjUOE1C9ZPTLRe2rz8x+bCGmlK/tgVieDi/dQlfEe9YZw7URy6IDqx6EgTWxHsHCjROYMnrG9v08w6KyR/NUet+e75vq8H9QW5TJLuPBM4/udZ7hU85isACCjZOYH247mnzs37eznQFaJzAcsR/u83ameS/kV8f1neVqM0ZG4Whp/1wazxJ+wkfWBPvHCjS8IEl4yyRQSA2WVfh0vrB4dYltAVWLYmj5yq2RUL9g4YXZRVYj0S7+ocjxqwMvTDc899Phj6srM4boBBDB5YMlIrj5EvX64o1scJzFifrw3KE+NYz9lWNw7uq+dWwHokfOTrNXN64PHcpdcIHVpanDjB9IzQJ42vxpx8+pu39PHpzT5f46E3C2jsrkjWkLQPPN4nc+rB0sr7FP+8w/W1SHveyE7+Glc1JAxRllD6sH1+9b3c99LS1h0kf7lk4dOTA+sJzS76X5IPxhXt+aXhNloGl5Kum6mPyELQ++rt48b5kHydoYGVyygDFMQdWXburVvQ4dKR1hdmmqtL6+Z692wOrv2X35Z/tvX/1ZmsW6nhdin2if1RDtjUsIe60vH+UWe+KxeifGIEFFMEYWHH1xve9tOXmOIj+/thPRfOCbrIE1ihTfnYCy9/sf8F0CBkH1r+stCfWZck4f0FgAcUw17DG4nmnOWK4u4S2yPJ9e5ZFKfq6FHn3YUU+5vu2Euz+V7ku2YbAAopg68MKB4xdsFwOlfq/BemFn+2BZV52cOAcLzpc+mo8L1XfIWQcWI5zrbUE3jXNfay3NHUJLCBP1sAavdkWPti3dznSgg+DHQm/mYzc7H+TbAMrcD53trX9W3lRJpF8zPLkEIEF5MkSWOHogeUufa/au/csA0vf+3llPISsm4RK/cJ2H9TXV35PCulIAgsoQoaB9bKhtZZhYFXeUI7xELIOLKHkVZ65G6ui9UNRq7cqtlmatAQWkKfsAmvNv/TnSZaB9XHHkgWZB1ZVLK62zdvgu/ETPAQWUIiM7hKGuvIxwx287ALLvybOAjmFPqxY9ZP2wbHrvxRtcIxOd6AAGQVWxfuUkKqvTZhVYLnhu/+eWrUm9SbZB5aoPmidGsu/PirCekskEFhAnrIJLF8fj58c7msTZhZYL/2PxakGlvj5DltZwvoLBBZQjIwC64l/jipYzrrevWcVWO9+Tkw1sKI3+8aS7Vj1+v8p1nOXECjA5IEVj1n69i+j+pXhUp00sMJk8Rz/n1Q8s4sQU+vDil2rzbMUhmHlBrXefBeRwAJylUUNy3v9s0IGpr1PXMNyfR0e+o4sIrB+YlunMEqsN86mhgUUIIPA8r8pq5a9TxpYUSyEN/yrLCSw5Ju2UoXhHM8SAkWYPLD2vOjEo8ONe588sOpXRwkQFBFYQr5mTSzPMz+7RGABuZogsDxfRxfuziuEaDyTbOgUn7hJGLofiKNQyY6+Q8irhqU+f7ZreQQ8Sivz3O8EFpCn8QMrrPjh0qHz4p1050m2geV7q5zAvv/Gm+QTWIGQt1qP3TbnPIEF5Gn8wIqqGNs//tl4PhlZzSuw3ND3fy/albepBpYIAvG0Z565i8ACCmEJrCFyxt31qf8lpBPnlcithlXR+syovVlEYCkl1D/uME/cRWABhbAElqfdeI7knssyuUw3xzESrjztfzf72WWP7r3bpkiO+4CGjTL/7mKahPGbinO8ih4BgQXkyjaBn2upRXhuuG3N8U//TtSc5vSiYwSWrriN/bfEjT/rDBHfLqZJGL9XsLhvlLwisIB82WpYS48eiDzU4/6PnPfdeLICJUV7aPs4gaWPXnjBH3b5hBD3WwPLO0cWFVii9qvtBBZQGubA8vSVynbtqSAewhA4raHtYwXW+t71uhZ/Z5+Da5Xs7sbqK1COgRW92bkEFlAatk73HZns3RpY2/qfPHw0tHT1e97vVVyfm/ZdwqY/0f7Q/VgEFpArW5Nw+oF1gWVxrcgDQVSvKyqw3jp7+HUUCSwgV+UJLLnfulqh/lNRKyywxCvDxhWBBeSsPIElvm58DsaLH4B+KQim3ofV3r24wT5fMoEFTFOJAks8YUyseA/hLxp99IXUsKpfOlYZslFIYAG5Kk9gKWGdz0Xrsxr3JIsIrCgqzxkurggsIGflCazoUn/AngS/b25TQA1Liuqww0cJLCBXJQosIX5gj4K7knGqhQRWVMd668rh1mkksIBclSmwpFitzWMb3NB7QzRn8Ot/k7wDK/Jdn8ACileewIo3/7A2T4znav2kEsIppoYVrwX93jB5RWAB+SpVYInPrbdVZHzvk05j8Gj/m0yhhiX+z+kEFlC4cgWWeN+SeT4aT4eHa6KYgaMRR4gPEFhA4coVWLUfrTdPmOeFofcx25tMo4YlxD5tf3aIwAKmolyBJdTD5kstdo3lNVMKrP97bPnEIrCAXJUrsKT4ymZbYOnwHcubTCewFq9eLq4ILCBn5QqsiHExwCSw6k9Y3mQ6gSWcd5d9ppDAAnJVUGBZdl8VwSXx7MzGInn1jzZ22jNhoNpliY+MAyv4zfnLtQkJLCBXpQqs+GIPDmvX3PGu9eGqIwJZVGAp8fxyywkRWECuShVYSWT91teWppdb+Y/m4NECAite21oc14NbhQQWkKuSBZaQVXWWPRTeq/ZNIT+9GlbkNwcH5hWBBeSrXIGVBNALA2oxX+hfqWeagVW92txcJbCAqShfYCnnAXsi7K/K1nZFBJYjnhvY705gAbkqX2BJ8bY9EMKvdrYrILBk7d8GNgoJLCBX5QssVQ2OadvtOH+/096wiMAS1fMILKAw5QusKJF+GMWVcca86Hv/0dly+oElksV9CCygIOULLKWCy9fbM+G9ajU9FmvKgSW+ctS+riqBBeSqbIHV+O+d2rXcKvSPfK1nLNa0A8u5zP4QNIEF5KpsgRVd79XA+dF6bazGxO3EA9XixmE1HK5b3jAKLEFgAflZablsDmWz+xWucf/uIctMMa0aytMDHoK5p7PkVyOxdllqY9ttZTJvfvVwhxSIrxyylc6rDv/R3KuXjPuYdyb7yKWorTXu2NUrs/mhAoWx1LD0MZXF3oNVnrn5tNq8fSuwnO8ftK76EO5znNa2je13mrfTO4zHoFZ5xoDzXxnumJSQ5/m20olg6M9mpSX1Vo6wD2P5qnKNuXDu5JU3oEiqdtjSHzOfzRvcZUmdBwLjVdkOLPmotYZV2ZmuYQXVw5Yq0y45SpncS4ar2qhgUdxl+dR2j5A1T1iO7ywhJ6pj1QL1pHnP/kvZ/FCBgkhxt/HSCyt/OWHDpOkNc5ZUTl2mSbj4qzXWGtav04/nBOIbxmPwK886o5TpqeHCJi6h/LGl2+x6KWvDfjQ3LZn38YKY8KNfNM8/7+n6kHVIoKSiq+v/7Tt+zTO9rs/o1A7Eb5++psdLz9yw783qcrUI+e8bH3z9mcM9notsCDod28m4LRV89LV9N1zTu+1nXhHGHvBAffXB/fufeebddzvbvvfSQzf+fHGUI3v7tdZr323a/9ItG8Twfe5C3fyZ9/b3eub4zVl87rc++O5dfbt+9OZMmvlAgazn8PBX3uDd9+5HBRNcNsk4LZn+cyDiPaqgl/UgVPQCpVJ/paq1ajWQapKDjl474uv73m/4MRHL7DiIYlz1fR5qouMDChdnhylAApVNizBezlmlRZfOUIOV4m0MS3op1f3tOLDiNpjpSlRRJc64Wmv0T1SIVO4lH0F0mY/yuRk+tMk/r0BO1uPeKV//RIeZ7BkoUHSl1mqmbFrM5uyWgem3evyuw72471uNgVepP8ddPsbS1pQpsGScmI3XdlI0SZuR6h9yiO8sw3DfIciqjmUscW3o/jWglNojA3Lc/xTKL61/N+Trk01P8vaSzPuHDeRt1gNrlhBYOOERWLODwMIJj8CaHQQWTnh5n8TTCiyrPN/8BMNHghMegTU7+EhwwiOwZgcfCU54BNbs4CPBCW/ZC37CE5zAKg8+EpzwCKzZwUeCEx6BNTv4SHDCI7BmBx8JAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZoAsugAAMNDlQjhBxFEEFsrDqbW/KrooKBPVPh84MVAmjlBKBfweRUrQ+VIVXRagJZDdpybQ8sG1q+cjc28XXRCg49q5nfNzkbcVNX90W6M9HQlXCiG7FF0szLY1WvthZBX1fqR0AksSWCgLAgtmBBZKqBVYuwgspBBYKCECC2YEFkqoFVg9XaucnzOPwEIJtQJrBYGFFAILJdQKrHkCCykEFkqIwIIZgYUSIrBgRmChhAgsmBFYKCECC2YEFkqIwEJCRT/rqnDaP/DqGTpRXyOCFsHMDZi2quicgJGuwOpDYM0UpVZ5ng4bvOisaCSW9nWbt42pPTBt850TMDk1veY56reE2xunJYE1Q2QgnvU9rbtPjiSuKp1vRl8tFF1OzJjgpnpo4Hafqd6GJKgIrFki5V4dds6BzheV9kmifW9j0cXErNmwpHvFgVXp/vMCgTVrop/1gl7e1qLLiVnzWLjsWelvJLBmDYGFchoqsJItCawZQmChnAgsGPQHVkhgoQQILFgc1Lo1rCH6ykufKPF9ZL35nqLLiBkTiINeN63dZHCDG98dbH5r6ZJkUwJrxnxt68KLG5q2HmqOv9qx5eKNGzdsWFi4+OJNWy4ouoiYPddt6nIobPxSPbZl4Yetc3XThY0VdAis2ZL+ac/7jcRa2flWwLL1mDIVnXaqy1yzFbBCVJ320zhKJetBE1gzTK1tNgXnU0/jLBZdLsyWas+zFWu0nwwkXRt0HiZMnt8RBNZsW6Mbj0CsTU6EoksDJNaGXm/Fv43AmmVrQgILpbO2+YwrgYU0AgslRGDBjMBCCRFYMOsKLKAsCCyYEVgoIQILZgQWSojAghmBhRIisGCk5hqPFXorJ98XkJXTm0+4zgeCRSfQEczrxoOlu4ouCdCxoq5bNaxFAgsdz+nNSWC9zEo5KI/b9ZFkqPvHVbzQE4GFFhk0TgbiCiWigqAzLpDAQhsnA0qoe8FUalho42RAGRFYMOJkQBkRWDDiZEAZEVgwkhZFlwuzjfMRRgQWyojzEUYEFsqI8xFGBBbKiPMRRgQWyojzEUYEFsqI8xFGBBbKiPMRRgQWyojzEQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8fvhxwolrLO/AAAAAASUVORK5CYII=" alt="Printtex" class="brand-logo">
+      <span class="brand-tag" style="border-color:var(--ink-2);color:var(--ink-2);" id="buildTag">build 2026-10-18-nouvelle-version</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnLogout" style="margin-left:6px;">Déconnexion</button>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="main-nav">
+    <button id="navCommandes" class="active">Commandes</button>
+    <button id="navMarques">Marques</button>
+    <button id="navVectorizer">Vectorizer</button>
+    <a href="idees.html" class="nav-link">Boîte à idées</a>
+  </div>
+
+  <div class="quota-widget" id="quotaWidget">
+    <div class="quota-week" id="quotaWeekRange"></div>
+    <div class="quota-bar-track"><div class="quota-bar-fill" id="quotaBarFill"></div></div>
+  </div>
+
+  <div class="storage-banner" id="storageBanner">
+    Cette application n'est pas encore connectée à une base de données. Les commandes ne seront pas partagées ni conservées d'un appareil à l'autre tant qu'une base Firebase n'est pas configurée dans le code (voir les instructions fournies).
+  </div>
+
+  <div id="commandesSection">
+
+  <div class="subbar">
+    <label class="check-inline"><input type="checkbox" id="showArchived"> Afficher les archives</label>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Rechercher un client, un produit…">
+    <select id="sortMode">
+      <option value="deadline">Trier par deadline</option>
+      <option value="priority">Trier par priorité</option>
+    </select>
+    <button class="btn btn-ghost" id="btnExport">Export CSV</button>
+    <input type="month" id="exportMonth" title="Mois à exporter pour la comptabilité" style="max-width:150px;">
+    <button class="btn btn-ghost" id="btnExportMonth" title="Commandes livrées du mois choisi, avec totaux">Export comptable</button>
+    <button class="btn btn-ghost" id="btnBackup">Sauvegarder tout</button>
+    <button class="btn btn-ghost" id="btnRestore">Restaurer</button>
+    <input type="file" id="restoreInput" accept="application/json" style="display:none;">
+    <div class="view-toggle">
+      <button id="btnKanban" class="active">Kanban</button>
+      <button id="btnList">Liste</button>
+    </div>
+    <button class="btn btn-primary" id="btnNew">+ Nouvelle commande</button>
+  </div>
+
+  <div id="board"></div>
+  <div id="listView" style="display:none;"></div>
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <h2>Aucune commande</h2>
+    <p>Commence par créer ta première commande pour la voir apparaître ici.</p>
+    <button class="btn btn-primary" id="btnNewEmpty" style="margin-top:10px;">+ Nouvelle commande</button>
+  </div>
+
+  </div>
+
+  <div id="marquesSection" style="display:none;">
+    <div class="toolbar">
+      <input type="text" id="brandSearch" placeholder="Rechercher une marque…">
+      <button class="btn btn-ghost" id="btnRecomputeBrands" title="Recalcule les compteurs de toutes les marques à partir de leurs commandes">↻ Recalculer</button>
+      <button class="btn btn-primary" id="btnNewBrand">+ Nouvelle marque</button>
+    </div>
+    <div id="brandsGrid" class="brands-grid"></div>
+    <div id="brandsEmpty" class="empty-state" style="display:none;">
+      <h2>Aucune marque</h2>
+      <p>Ajoute une marque pour commencer à suivre ce qu'il faut lui produire.</p>
+      <button class="btn btn-primary" id="btnNewBrandEmpty" style="margin-top:10px;">+ Nouvelle marque</button>
+    </div>
+  </div>
+
+  <div id="vectorizerSection" style="display:none;">
+    <div id="vecIntro">
+      <div class="vec-drop" id="vecDrop">
+        <div class="vec-plus">+</div>
+        <div class="vec-drop-title">Dépose une image ou clique pour en choisir une</div>
+        <div class="vec-drop-sub">PNG, JPG… — traitement 100 % local, rien n'est envoyé sur un serveur</div>
+      </div>
+      <input type="file" id="vecFileInput" accept="image/*" style="display:none;">
+    </div>
+
+    <div id="vecWorkspace" style="display:none;">
+      <div class="vec-compare-wrap">
+        <div class="vec-compare" id="vecCompare">
+          <img id="vecCompareOriginal" class="vec-compare-original" alt="Original">
+          <div class="vec-compare-after" id="vecCompareAfter">
+            <div id="vecResultContainer"></div>
+          </div>
+          <div class="vec-slider-line" id="vecSliderLine"></div>
+          <div class="vec-slider-handle" id="vecSliderHandle">↔</div>
+          <input type="range" id="vecSlider" min="0" max="100" value="50">
+        </div>
+        <div class="vec-labels">
+          <span>Avant</span>
+          <span id="vecStatus">—</span>
+          <span>Après</span>
+        </div>
+      </div>
+
+      <div class="vec-controls">
+        <div class="vec-control-row">
+          <label for="vecSmooth">Lissage des contours : <span id="vecSmoothVal">6</span></label>
+          <input type="range" id="vecSmooth" min="0" max="10" value="6">
+        </div>
+        <div class="vec-control-row">
+          <label for="vecColors">Nombre de couleurs : <span id="vecColorsVal">12</span></label>
+          <input type="range" id="vecColors" min="2" max="48" value="12">
+        </div>
+        <div class="vec-control-row vec-checkbox-row">
+          <label><input type="checkbox" id="vecGrayscale"> Niveaux de gris</label>
+        </div>
+        <div class="vec-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnVecNewImage">Nouvelle image</button>
+          <button type="button" class="btn btn-primary" id="btnDownloadSvg">Télécharger le SVG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Nouvelle commande</h2>
+    <div class="sub" id="modalSub">Renseigne les informations de la commande.</div>
+    <form id="orderForm" novalidate>
+      <div class="form-grid">
+        <div>
+          <label for="clientName">Nom du client</label>
+          <input type="text" id="clientName" required placeholder="Ex. Studio Delacroix">
+        </div>
+        <div>
+          <label for="clientContact">Contact (tél / email)</label>
+          <input type="text" id="clientContact" required placeholder="06 12 34 56 78 ou email">
+        </div>
+        <div class="full" id="historyWrap" style="display:none;">
+          <label>Historique de ce client</label>
+          <div class="history-box" id="historyBox"></div>
+        </div>
+        <div class="full">
+          <label>Produits de la commande</label>
+          <div id="orderItemsBody"></div>
+          <input type="file" id="itemSlotInput" accept="image/*" style="display:none;">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnAddOrderItem" style="margin-top:8px;">+ Ajouter un produit</button>
+          <div class="hint" id="orderItemsTotal"></div>
+        </div>
+        <div>
+          <label for="deadline">Deadline</label>
+          <input type="date" id="deadline" required>
+        </div>
+        <div class="qty-row full" style="display:grid;grid-template-columns:1fr;gap:5px;">
+          <label for="prodTime">Temps estimé de production</label>
+          <div class="qty-row">
+            <input type="number" id="prodTime" min="0" step="0.5" placeholder="Ex. 3">
+            <select id="prodTimeUnit">
+              <option value="heures">heures</option>
+              <option value="jours" selected>jours</option>
+            </select>
+          </div>
+          <div class="hint" id="startHint"></div>
+        </div>
+        <div>
+          <label for="status">Statut</label>
+          <select id="status"></select>
+        </div>
+        <div>
+          <label for="priority">Priorité</label>
+          <select id="priority">
+            <option value="basse">Basse</option>
+            <option value="normale" selected>Normale</option>
+            <option value="haute">Haute</option>
+          </select>
+        </div>
+        <div>
+          <label for="priceAmount">Prix total (€)</label>
+          <input type="number" id="priceAmount" min="0" step="0.01" placeholder="Ex. 450">
+        </div>
+        <div>
+          <label for="depositAmount">Acompte versé (€)</label>
+          <input type="number" id="depositAmount" min="0" step="0.01" placeholder="Ex. 100">
+        </div>
+        <div class="full hint" id="paymentHint"></div>
+        <div class="full">
+          <label class="check-inline" style="font-size:13px;justify-content:flex-end;gap:4px;width:100%;"><input type="checkbox" id="toCheckOnReceipt"> Prix à déterminer lors de réception</label>
+        </div>
+
+        <div class="full">
+          <div class="extra-imgs-label"><label style="margin:0;">Images supplémentaires (croquis, références, coloris…)</label></div>
+          <div class="img-drop" id="imgDrop">Cliquer pour ajouter d'autres images</div>
+          <input type="file" id="imgInput" accept="image/*" multiple style="display:none;">
+          <div class="img-preview-row" id="imgPreviewRow"></div>
+          <div class="hint">Les images sont conservées à leur résolution d'origine, sans compression.</div>
+        </div>
+
+        <div class="full">
+          <label for="notes">Notes (optionnel)</label>
+          <textarea id="notes" placeholder="Consignes particulières…"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <div class="left">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnDelete" style="display:none;color:var(--thread);border-color:var(--thread);">Supprimer</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnDuplicate" style="display:none;">Dupliquer</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnArchive" style="display:none;">Archiver</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnPrint" style="display:none;">Imprimer</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnDownloadImages" style="display:none;">Télécharger les images</button>
+        </div>
+        <div class="right">
+          <button type="button" class="btn btn-ghost" id="btnCancel">Annuler</button>
+          <button type="button" class="btn btn-primary" id="btnSave">Enregistrer</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="brandOverlay">
+  <div class="modal" style="max-width:420px;">
+    <h2 id="brandModalTitle">Nouvelle marque</h2>
+    <div class="sub">Renseigne les informations de la marque.</div>
+    <form id="brandForm" novalidate>
+      <div class="form-grid">
+        <div class="full">
+          <label for="brandName">Nom de la marque</label>
+          <input type="text" id="brandName" required placeholder="Ex. Studio Delacroix">
+        </div>
+        <div class="full">
+          <label for="brandContact">Contact (optionnel)</label>
+          <input type="text" id="brandContact" placeholder="Téléphone, email…">
+        </div>
+        <div class="full">
+          <label for="brandNotes">Notes (optionnel)</label>
+          <textarea id="brandNotes" placeholder="Infos utiles sur cette marque…"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <div class="left">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnDeleteBrand" style="display:none;color:var(--thread);border-color:var(--thread);">Supprimer</button>
+        </div>
+        <div class="right">
+          <button type="button" class="btn btn-ghost" id="btnBrandCancel">Annuler</button>
+          <button type="button" class="btn btn-primary" id="btnBrandSave">Enregistrer</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="tasksOverlay">
+  <div class="modal" style="max-width:980px;">
+    <div class="tasks-modal-header">
+      <div>
+        <h2 id="tasksModalTitle">Marque</h2>
+        <div class="sub" id="tasksModalSub"></div>
+        <div class="tasks-modal-phone">
+          <span>☎</span>
+          <input type="tel" id="tasksModalPhone" placeholder="Numéro à appeler en cas de besoin">
+        </div>
+      </div>
+      <div class="tasks-modal-nav">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnPrintBrandSummary">🖨 Imprimer le résumé des commandes</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnShowNewProduct">+ Nouveau produit</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnShowNewOrder">+ Nouvelle commande</button>
+      </div>
+    </div>
+
+    <div id="tasksViewDefault">
+      <label class="check-inline" style="margin-bottom:10px;"><input type="checkbox" id="showDoneTasks"> Afficher les commandes déjà faites</label>
+      <div id="tasksTableBody" class="task-cards-list"></div>
+      <div id="tasksDoneGroups"></div>
+      <input type="file" id="taskMockupInput" accept="image/*" style="display:none;">
+      <div class="tasks-note">Seuls les modèles qui ont déjà été réalisés précédemment peuvent être inscrits dans le tableau, pour SAMPLER, RDV en boutique.</div>
+    </div>
+
+    <div id="tasksViewNewProduct" style="display:none;">
+      <div class="product-form">
+        <div class="product-form-grid">
+          <div>
+            <label for="prodNom">Nom du produit</label>
+            <input type="text" id="prodNom" placeholder="Ex. T-shirt col rond logo dos">
+          </div>
+          <div>
+            <label for="prodCouleurs">Couleurs</label>
+            <input type="text" id="prodCouleurs" placeholder="Ex. Noir, Blanc">
+          </div>
+          <div>
+            <label for="prodImpression">Type d'impression</label>
+            <select id="prodImpression"></select>
+          </div>
+          <div>
+            <label for="prodBlank">Blank</label>
+            <select id="prodBlank"></select>
+            <input type="text" id="prodBlankOther" style="display:none;margin-top:5px;" placeholder="Préciser le blank">
+          </div>
+          <div class="full">
+            <label for="prodRemarque">Remarque</label>
+            <textarea id="prodRemarque" placeholder="Notes sur ce produit…"></textarea>
+          </div>
+          <div class="full">
+            <label>Images du produit (5 max)</label>
+            <div class="product-img-row" id="prodImgRow"></div>
+            <input type="file" id="prodImgInput" accept="image/*" style="display:none;">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <div class="left"><button type="button" class="btn btn-ghost btn-sm" id="btnBackFromProduct">← Retour</button></div>
+          <div class="right"><button type="button" class="btn btn-primary" id="btnSaveProduct">Enregistrer le produit</button></div>
+        </div>
+      </div>
+      <div class="products-catalog" id="productsCatalog"></div>
+    </div>
+
+    <div id="tasksViewNewOrder" style="display:none;">
+      <div class="hint" style="margin-bottom:10px;">Choisis une quantité pour chaque produit à commander, puis valide.</div>
+      <div class="order-catalog" id="orderCatalog"></div>
+      <div class="modal-actions">
+        <div class="left"><button type="button" class="btn btn-ghost btn-sm" id="btnBackFromOrder">← Retour</button></div>
+        <div class="right"><button type="button" class="btn btn-primary" id="btnCreateOrderFromCatalog">Créer la commande</button></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <div class="left"></div>
+      <div class="right">
+        <button type="button" class="btn btn-primary" id="btnTasksClose">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="mockupGalleryOverlay">
+  <div class="modal" style="max-width:640px;">
+    <h2>Visuels du produit</h2>
+    <div class="sub" id="mockupGalleryTaskName"></div>
+    <div class="mockup-gallery-grid" id="mockupGalleryGrid"></div>
+    <div class="modal-actions">
+      <div class="left"><button type="button" class="btn btn-ghost btn-sm" id="btnGalleryAddPhoto">+ Ajouter une photo</button></div>
+      <div class="right">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnGalleryDownloadAll">Télécharger tout</button>
+        <button type="button" class="btn btn-primary" id="btnGalleryClose">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:380px;">
+    <p id="confirmMsg" style="font-size:13px;line-height:1.5;margin:0 0 18px;"></p>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button type="button" class="btn btn-ghost" id="confirmCancel">Annuler</button>
+      <button type="button" class="btn btn-primary" id="confirmOk">Confirmer</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.16.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.16.0/firebase-firestore-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.16.0/firebase-storage-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/12.16.0/firebase-auth-compat.min.js"></script>
+<script>
+if(typeof firebase === 'undefined' || !firebase.auth || !firebase.firestore || !firebase.storage){
+  ['app','firestore','storage','auth'].forEach(function(n){
+    document.write('<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-'+n+'-compat.js"><\/script>');
+  });
+}
+</script>
+<script>
+window.addEventListener('error', function(ev){
+  try{
+    var el = document.getElementById('authError');
+    if(el && !el.textContent) el.textContent = 'Erreur technique : ' + (ev && ev.message ? ev.message : 'inconnue') + ' — rechargez la page ou ouvrez le site dans Safari.';
+  }catch(_){}
+});
+if(typeof firebase === 'undefined'){
+  window.addEventListener('DOMContentLoaded', function(){
+    var el = document.getElementById('authError');
+    if(el) el.textContent = 'Chargement impossible (réseau ou bloqueur de contenu). Désactivez-le puis rechargez.';
+  });
+}
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBElBwDqwtR1jTIs_n2iyjM4juuwAJfTck",
+  authDomain: "printtex-commande.firebaseapp.com",
+  projectId: "printtex-commande",
+  storageBucket: "printtex-commande.firebasestorage.app",
+  messagingSenderId: "240429387217",
+  appId: "1:240429387217:web:d49c2842305faeb821e4f0"
+};
+const STATUSES = [
+  {key:'attente_production', label:'En attente de production'},
+  {key:'production', label:'En production'},
+  {key:'prete', label:'Prête'},
+  {key:'livree', label:'Livrée'},
+  {key:'annulee', label:'Annulée'}
+];
+const SLOTS = [
+  {key:'face', label:'Face'},
+  {key:'dos', label:'Dos'},
+  {key:'mancheGauche', label:'Manche G.'},
+  {key:'mancheDroite', label:'Manche D.'},
+  {key:'etiquette', label:'Étiquette'},
+  {key:'mockup1', label:'Mockup 1'},
+  {key:'mockup2', label:'Mockup 2'}
+];
+const PRIORITY_LABEL = {basse:'Basse', normale:'Normale', haute:'Haute'};
+const PRIORITY_RANK = {haute:0, normale:1, basse:2};
+const firebaseConfigured = FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.includes('COLLE_');
+let db = null;
+let storageRef = null;
+let auth = null;
+if(firebaseConfigured){
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    db.settings({ experimentalForceLongPolling: true });
+    /* Version de test : toutes les données vont dans des collections beta_ et le dossier beta/ du Storage,
+       pour ne jamais toucher aux données de l'appli en service. */
+    const DATA_PREFIX = 'beta_';
+    const rootCollection = db.collection.bind(db);
+    db.collection = (name)=> rootCollection(DATA_PREFIX + name);
+    storageRef = firebase.storage().ref().child('beta');
+    auth = firebase.auth();
+  }catch(e){ console.error('Erreur init Firebase', e); }
+}
+let orders = [];
+let currentEditId = null;
+let currentImages = { extra:[] };
+let currentView = 'kanban';
+const $ = (sel) => document.querySelector(sel);
+if(!firebaseConfigured){ $('#storageBanner') && $('#storageBanner').classList.add('show'); }
+
+window.addEventListener('error', (e)=>{
+  console.error('Erreur non interceptée :', e.error || e.message);
+  showToast('Erreur JS : ' + (e.message || 'inconnue'));
+});
+window.addEventListener('unhandledrejection', (e)=>{
+  console.error('Promesse rejetée non interceptée :', e.reason);
+  showToast('Erreur : ' + (e.reason && e.reason.message ? e.reason.message : 'action non aboutie'));
+});
+const statusSelect = $('#status');
+STATUSES.forEach(s => {
+  const o = document.createElement('option');
+  o.value = s.key; o.textContent = s.label;
+  statusSelect.appendChild(o);
+});
+
+function showToast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+function askConfirm(message){
+  return new Promise((resolve)=>{
+    $('#confirmMsg').textContent = message;
+    $('#confirmOverlay').classList.add('open');
+    const onOk = ()=> finish(true);
+    const onCancel = ()=> finish(false);
+    function finish(result){
+      $('#confirmOverlay').classList.remove('open');
+      $('#confirmOk').removeEventListener('click', onOk);
+      $('#confirmCancel').removeEventListener('click', onCancel);
+      resolve(result);
+    }
+    $('#confirmOk').addEventListener('click', onOk);
+    $('#confirmCancel').addEventListener('click', onCancel);
+  });
+}
+
+/* ---------- Storage (Firestore) ---------- */
+function withTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('délai dépassé')), ms))
+  ]);
+}
+async function loadOrders(){
+  if(!db){ orders = []; render(); return; }
+  try{
+    const snap = await withTimeout(db.collection('orders').get(), 14000);
+    orders = snap.docs.map(d=>d.data());
+    const validKeys = STATUSES.map(s=>s.key);
+    const toFix = orders.filter(o=>!validKeys.includes(o.status));
+    toFix.forEach(o=>{ o.status = 'attente_production'; });
+    if(toFix.length) toFix.forEach(o=> saveOrder(o).catch(()=>{}));
+    orders.filter(o=>o.status==='prete' && !o.readyAt && !toFix.includes(o)).forEach(o=> saveOrder(o).catch(()=>{}));
+  }catch(e){
+    orders = [];
+    showToast("Erreur de chargement des commandes (" + e.message + ")");
+  }
+  render();
+}
+async function saveOrder(order){
+  if(!db) return { ok:false, error: 'Firebase non configuré' };
+  try{
+    if(order.status === 'prete'){ if(!order.readyAt) order.readyAt = new Date().toISOString(); }
+    else if(order.readyAt){ delete order.readyAt; }
+    if(order.status === 'livree'){ if(!order.deliveredAt) order.deliveredAt = new Date().toISOString(); }
+    else if(order.deliveredAt){ delete order.deliveredAt; }
+    await withTimeout(db.collection('orders').doc(order.id).set(order), 14000);
+    return { ok:true };
+  }catch(e){
+    return { ok:false, error: (e && e.message) ? e.message : 'erreur inconnue' };
+  }
+}
+async function deleteImageFiles(paths){
+  if(!storageRef || !paths.length) return;
+  await Promise.all(paths.map(p => storageRef.child(p).delete().catch(()=>{})));
+}
+async function purgeOrderImages(id){
+  if(!db) return;
+  try{
+    const imagesSnap = await withTimeout(db.collection('orders').doc(id).collection('images').get(), 12000);
+    const paths = [];
+    imagesSnap.forEach(d=>{ const data = d.data(); if(data && data.path) paths.push(data.path); });
+    await deleteImageFiles(paths);
+    const batch = db.batch();
+    imagesSnap.forEach(d=> batch.delete(d.ref));
+    await withTimeout(batch.commit(), 12000);
+  }catch(e){}
+}
+async function deleteOrderCompletely(id){
+  if(!db) return;
+  try{
+    const imagesSnap = await withTimeout(db.collection('orders').doc(id).collection('images').get(), 12000);
+    const paths = [];
+    imagesSnap.forEach(d=>{ const data = d.data(); if(data && data.path) paths.push(data.path); });
+    await deleteImageFiles(paths);
+    const batch = db.batch();
+    imagesSnap.forEach(d=> batch.delete(d.ref));
+    batch.delete(db.collection('orders').doc(id));
+    await withTimeout(batch.commit(), 12000);
+  }catch(e){
+    showToast("Erreur de suppression (" + e.message + ")");
+  }
+}
+async function uploadImageFile(file, path){
+  const ref = storageRef.child(path);
+  await withTimeout(ref.put(file), 60000);
+  const url = await withTimeout(ref.getDownloadURL(), 15000);
+  return url;
+}
+
+async function copyImagesToNewOrder(srcImages, newOrderId, items){
+  const copiedByItem = {};
+  const copiedExtra = [];
+  if(!storageRef) return { byItem: copiedByItem, extra: copiedExtra };
+  for(const it of items){
+    const slots = srcImages.items[it.__srcId] || {};
+    const copy = {};
+    for(const s of SLOTS){
+      const im = slots[s.key];
+      if(im && im.url){
+        try{
+          const blob = await (await fetch(im.url)).blob();
+          const path = `orders/${newOrderId}/items/${it.id}/${s.key}_${Date.now()}`;
+          const ref = storageRef.child(path);
+          await ref.put(blob);
+          const url = await ref.getDownloadURL();
+          copy[s.key] = { name: im.name, url, path };
+        }catch(e){}
+      }
+    }
+    copiedByItem[it.id] = copy;
+  }
+  for(let i=0; i<(srcImages.extra||[]).length; i++){
+    const im = srcImages.extra[i];
+    if(im && im.url){
+      try{
+        const blob = await (await fetch(im.url)).blob();
+        const path = `orders/${newOrderId}/extra_${Date.now()}_${i}`;
+        const ref = storageRef.child(path);
+        await ref.put(blob);
+        const url = await ref.getDownloadURL();
+        copiedExtra.push({ name: im.name, url, path });
+      }catch(e){}
+    }
+  }
+  return { byItem: copiedByItem, extra: copiedExtra };
+}
+
+async function saveOrderImages(orderId, items, extra){
+  if(!db || !storageRef) return false;
+  try{
+    for(const it of items){
+      for(const s of SLOTS){
+        const im = it.slots[s.key];
+        if(im && im.file){
+          const path = `orders/${orderId}/items/${it.id}/${s.key}_${Date.now()}`;
+          const url = await uploadImageFile(im.file, path);
+          it.slots[s.key] = { name: im.name, url, path };
+        }
+      }
+    }
+    for(let i=0; i<(extra||[]).length; i++){
+      const im = extra[i];
+      if(im && im.file){
+        const path = `orders/${orderId}/extra_${Date.now()}_${i}`;
+        const url = await uploadImageFile(im.file, path);
+        extra[i] = { name: im.name, url, path };
+      }
+    }
+    const imagesRef = db.collection('orders').doc(orderId).collection('images');
+    const existing = await withTimeout(imagesRef.get(), 12000);
+    const batch = db.batch();
+    existing.forEach(d=> batch.delete(d.ref));
+    items.forEach(it=>{
+      SLOTS.forEach(s=>{ if(it.slots[s.key]) batch.set(imagesRef.doc(`item_${it.id}_${s.key}`), it.slots[s.key]); });
+    });
+    (extra||[]).forEach((im,i)=> batch.set(imagesRef.doc('extra_'+i), im));
+    await withTimeout(batch.commit(), 14000);
+    return true;
+  }catch(e){
+    showToast("Erreur d'envoi des images (" + (e && e.message ? e.message : 'inconnue') + ")");
+    return false;
+  }
+}
+function emptySlots(){
+  const o = {};
+  SLOTS.forEach(s=> o[s.key] = null);
+  return o;
+}
+async function loadOrderImages(orderId){
+  const empty = { extra:[], items:{}, legacySlots: emptySlots() };
+  if(!db) return empty;
+  try{
+    const snap = await withTimeout(db.collection('orders').doc(orderId).collection('images').get(), 12000);
+    const result = { extra:[], items:{}, legacySlots: emptySlots() };
+    const extras = [];
+    const legacyKeys = ['face','dos','mancheGauche','mancheDroite','etiquette'];
+    snap.forEach(d=>{
+      const data = d.data();
+      if(d.id.startsWith('extra_')){
+        extras.push(data);
+      }else if(d.id.startsWith('item_')){
+        const rest = d.id.slice('item_'.length);
+        let matchedSlot = null;
+        for(const s of SLOTS){ if(rest.endsWith('_'+s.key)){ matchedSlot = s.key; break; } }
+        if(matchedSlot){
+          const itemId = rest.slice(0, rest.length - ('_'+matchedSlot).length);
+          if(!result.items[itemId]) result.items[itemId] = {};
+          result.items[itemId][matchedSlot] = data;
+        }
+      }else if(legacyKeys.includes(d.id)){
+        result.legacySlots[d.id] = data;
+      }
+    });
+    result.extra = extras;
+    return result;
+  }catch(e){
+    return empty;
+  }
+}
+
+/* ---------- Dates & labels ---------- */
+function daysUntil(dateStr){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+function formatDate(dateStr){
+  if(!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'short'});
+}
+function productionDays(o){
+  if(!o.prodTime) return 0;
+  const v = Number(o.prodTime) || 0;
+  return o.prodTimeUnit === 'heures' ? v/24 : v;
+}
+function startDate(o){
+  if(!o.deadline) return null;
+  const d = new Date(o.deadline);
+  d.setDate(d.getDate() - Math.ceil(productionDays(o)));
+  return d;
+}
+function needsToStart(o){
+  if(!['attente_production'].includes(o.status)) return false;
+  const sd = startDate(o);
+  if(!sd) return false;
+  const today = new Date(); today.setHours(0,0,0,0); sd.setHours(0,0,0,0);
+  return today >= sd;
+}
+function deadlineBadge(o){
+  if(o.status === 'livree' || o.status === 'annulee'){
+    return `<span class="deadline dl-done">${formatDate(o.deadline)}</span>`;
+  }
+  const days = daysUntil(o.deadline);
+  let cls = 'dl-normal', label = formatDate(o.deadline);
+  if(days < 0){ cls = 'dl-over'; label += ` · en retard`; }
+  else if(days <= 2){ cls = 'dl-soon'; label += ` · J-${days}`; }
+  return `<span class="deadline ${cls}">${label}</span>`;
+}
+function paymentBadge(o){
+  const price = Number(o.priceAmount);
+  if(!price) return '';
+  const dep = Number(o.depositAmount) || 0;
+  if(dep >= price) return `<span class="badge pay-paye">Payé</span>`;
+  if(dep > 0) return `<span class="badge pay-partiel">Acompte · reste ${(price-dep).toFixed(2)} €</span>`;
+  return `<span class="badge pay-nonpaye">Non payé</span>`;
+}
+function productLabel(o){
+  if(o.items && o.items.length){
+    if(o.items.length === 1){
+      const it = o.items[0];
+      return it.product === 'Autre' && it.productOther ? it.productOther : it.product;
+    }
+    return o.items.length + ' produits';
+  }
+  return o.product === 'Autre' && o.productOther ? o.productOther : o.product;
+}
+function itemLabel(it){
+  const name = it.product === 'Autre' && it.productOther ? it.productOther : it.product;
+  const blankLabel = it.blank === 'Autre' && it.blankOther ? it.blankOther : it.blank;
+  const bits = [name];
+  if(blankLabel) bits.push('Blank ' + blankLabel);
+  if(it.sizes && sizesText(it.sizes)) bits.push(sizesText(it.sizes));
+  else if(it.taille) bits.push(it.taille);
+  if(it.couleur) bits.push(it.couleur);
+  return `${bits.join(' · ')} — ${it.impression} ×${it.quantity}`;
+}
+function sizesText(sizes){
+  if(!sizes) return '';
+  return Object.entries(sizes).filter(([k,v])=>v).map(([k,v])=>k+':'+v).join('  ');
+}
+
+/* ---------- Relances / encaissements ---------- */
+const RELANCE_DAYS = 3;
+let activeFilter = null; // null | 'relance' | 'encaisser'
+function daysReady(o){
+  if(o.status !== 'prete' || !o.readyAt) return 0;
+  return Math.floor((Date.now() - new Date(o.readyAt).getTime()) / 86400000);
+}
+function needsRelance(o){ return !o.archived && o.status === 'prete' && daysReady(o) >= RELANCE_DAYS; }
+function amountDue(o){
+  if(o.status === 'annulee') return 0;
+  const price = Number(o.priceAmount) || 0;
+  if(!price) return 0;
+  return Math.max(0, price - (Number(o.depositAmount) || 0));
+}
+function archivesVisible(){
+  return $('#showArchived').checked || !!$('#search').value.trim() || activeFilter === 'encaisser';
+}
+
+/* ---------- Filter / sort ---------- */
+function filteredOrders(){
+  const q = $('#search').value.trim().toLowerCase();
+  const showArchived = archivesVisible();
+  const qNum = q.replace(/^#/, '').replace(/^0+(?=\d)/, '');
+  return orders.filter(o=>{
+    if(!showArchived && o.archived) return false;
+    if(activeFilter === 'relance' && !needsRelance(o)) return false;
+    if(activeFilter === 'encaisser' && amountDue(o) <= 0) return false;
+    if(q){
+      const itemsTxt = (o.items||[]).map(it=>[it.product, it.productOther, it.couleur, it.impression].join(' ')).join(' ');
+      const hay = (o.clientName+' '+productLabel(o)+' '+o.clientContact+' '+itemsTxt+' #'+String(o.orderNumber||0).padStart(4,'0')+' '+(o.orderNumber||'')).toLowerCase();
+      if(!hay.includes(q) && !(qNum && /^\d+$/.test(qNum) && String(o.orderNumber||'') === qNum)) return false;
+    }
+    return true;
+  });
+}
+function sortOrders(list){
+  const mode = $('#sortMode').value;
+  return [...list].sort((a,b)=>{
+    if(mode === 'priority'){
+      const pr = (PRIORITY_RANK[a.priority]??1) - (PRIORITY_RANK[b.priority]??1);
+      if(pr !== 0) return pr;
+    }
+    return new Date(a.deadline) - new Date(b.deadline);
+  });
+}
+
+/* ---------- Stats ---------- */
+function renderStats(){
+  const active = orders.filter(o=>!o.archived);
+  const total = active.length;
+  const urgent = active.filter(o => !['livree','annulee'].includes(o.status) && daysUntil(o.deadline) <= 2).length;
+  const production = active.filter(o => o.status === 'production').length;
+  const livree = active.filter(o => o.status === 'livree').length;
+  const relanceCount = orders.filter(needsRelance).length;
+  const dueTotal = orders.reduce((sum,o)=> sum + amountDue(o), 0);
+  const dueCount = orders.filter(o=> amountDue(o) > 0).length;
+  $('#stats').innerHTML = `
+    <div class="stat"><div class="n">${total}</div><div class="l">Total</div></div>
+    <div class="stat urgent"><div class="n">${urgent}</div><div class="l">Urgentes</div></div>
+    <div class="stat"><div class="n">${production}</div><div class="l">Production</div></div>
+    <div class="stat"><div class="n">${livree}</div><div class="l">Livrées</div></div>
+    <div class="stat clickable ${activeFilter==='relance'?'on':''}" data-filter="relance" title="Prêtes depuis ${RELANCE_DAYS} jours ou plus"><div class="n">${relanceCount}</div><div class="l">À relancer</div></div>
+    <div class="stat clickable ${activeFilter==='encaisser'?'on':''}" data-filter="encaisser" title="${dueCount} commande(s) avec un reste à payer (livrées comprises)"><div class="n">${dueTotal.toFixed(0)} €</div><div class="l">À encaisser</div></div>
+  `;
+  $('#stats').querySelectorAll('.stat.clickable').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      activeFilter = (activeFilter === el.dataset.filter) ? null : el.dataset.filter;
+      render();
+    });
+  });
+}
+
+const TSHIRT_WEEKLY_QUOTA = 500;
+function getWeekRange(date){
+  const d = new Date(date);
+  const day = d.getDay();
+  const diffToMonday = (day === 0) ? -6 : 1 - day;
+  const monday = new Date(d); monday.setDate(d.getDate() + diffToMonday); monday.setHours(0,0,0,0);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
+  return { monday, sunday };
+}
+function orderTshirtPoints(o){
+  if(o.items && o.items.length) return o.items.reduce((n,it)=> n + (it.product === 'T-shirt' ? (Number(it.quantity)||0) : 0), 0);
+  return o.product === 'T-shirt' ? (Number(o.quantity)||0) : 0;
+}
+function weekPoints(date, excludeId){
+  const { monday, sunday } = getWeekRange(date);
+  return orders.reduce((sum,o)=>{
+    if(o.id === excludeId || o.status === 'annulee' || !o.deadline) return sum;
+    const d = new Date(o.deadline);
+    if(d < monday || d > sunday) return sum;
+    return sum + orderTshirtPoints(o);
+  }, 0);
+}
+function capacityWarning(order){
+  if(!order.deadline || order.status === 'annulee' || order.status === 'livree') return '';
+  const mine = orderTshirtPoints(order);
+  if(!mine) return '';
+  const total = weekPoints(order.deadline, order.id) + mine;
+  if(total <= TSHIRT_WEEKLY_QUOTA) return '';
+  const base = new Date(order.deadline);
+  for(let i=1; i<=12; i++){
+    const d = new Date(base); d.setDate(base.getDate() + 7*i);
+    if(weekPoints(d, order.id) + mine <= TSHIRT_WEEKLY_QUOTA){
+      const { monday } = getWeekRange(d);
+      return `⚠ Semaine surchargée (${total}/${TSHIRT_WEEKLY_QUOTA} pts). Première semaine avec de la place : lundi ${monday.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}.`;
+    }
+  }
+  return `⚠ Semaine surchargée (${total}/${TSHIRT_WEEKLY_QUOTA} pts).`;
+}
+function renderQuota(){
+  const { monday, sunday } = getWeekRange(new Date());
+  let points = 0;
+  orders.forEach(o=>{
+    if(o.status === 'annulee' || !o.deadline) return;
+    const d = new Date(o.deadline);
+    if(d < monday || d > sunday) return;
+    if(o.items && o.items.length){
+      o.items.forEach(it=>{ if(it.product === 'T-shirt') points += Number(it.quantity)||0; });
+    }else if(o.product === 'T-shirt'){
+      points += Number(o.quantity)||0;
+    }
+  });
+
+  const pct = Math.min(100, (points / TSHIRT_WEEKLY_QUOTA) * 100);
+  const fill = $('#quotaBarFill');
+  fill.style.width = pct + '%';
+  fill.classList.remove('warn', 'over');
+  if(points > TSHIRT_WEEKLY_QUOTA) fill.classList.add('over');
+  else if(points >= TSHIRT_WEEKLY_QUOTA * 0.8) fill.classList.add('warn');
+
+  $('#quotaWeekRange').textContent = `Semaine du ${monday.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} au ${sunday.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}`;
+
+  let title = `${points} / ${TSHIRT_WEEKLY_QUOTA} pts`;
+  if(points > TSHIRT_WEEKLY_QUOTA) title += ` — dépassement de ${points - TSHIRT_WEEKLY_QUOTA} pts`;
+  $('#quotaWidget').title = title;
+}
+
+/* ---------- Cards ---------- */
+function tagCardHTML(o){
+  const thumbs = o.thumbnails || [];
+  const imgs = thumbs.slice(0,3).map(t=>`<img src="${t}" alt="">`).join('');
+  const extra = (o.imageCount||0) > 3 ? `<div class="more">+${o.imageCount-3}</div>` : '';
+  const num = '#' + String(o.orderNumber||0).padStart(4,'0');
+  return `
+  <div class="tag ${o.archived?'is-archived':''}" data-id="${o.id}">
+    <div class="tag-num">${num}${o.archived?' · archivée':''}</div>
+    <div class="tag-top">
+      <div class="tag-product">${productLabel(o)}</div>
+      <div class="tag-qty">×${o.quantity}</div>
+    </div>
+    <div class="tag-client">${o.clientName}</div>
+    ${imgs || extra ? `<div class="tag-imgs">${imgs}${extra}</div>` : ''}
+    ${o.items && o.items.length > 1
+      ? `<div class="tag-items">${o.items.map(it=>`<div class="tag-item-line">${itemLabel(it)}</div>`).join('')}</div>`
+      : ''}
+    <div class="tag-meta">
+      <span><b>Impression :</b> <span class="badge badge-method">${o.printMethod}</span></span>
+      ${o.sizes && sizesText(o.sizes) ? `<span><b>Tailles :</b> ${sizesText(o.sizes)}</span>` : ''}
+      <span><b>Contact :</b> ${o.clientContact}</span>
+      <span><b>Prod. estimée :</b> ${o.prodTime ? o.prodTime + ' ' + o.prodTimeUnit : '—'}</span>
+    </div>
+    <div class="badge-row">
+      ${o.priority==='haute' ? '<span class="badge pri-haute">Priorité haute</span>' : ''}
+      ${o.priority==='basse' ? '<span class="badge pri-basse">Priorité basse</span>' : ''}
+      ${o.toCheckOnReceipt ? '<span class="badge pri-haute">Prix à déterminer lors de réception</span>' : ''}
+      ${paymentBadge(o)}
+      ${needsRelance(o) ? `<span class="badge pri-haute">Prête depuis ${daysReady(o)} j</span>` : ''}
+    </div>
+    ${deadlineBadge(o)}
+    ${needsToStart(o) ? '<div class="warn-start">À lancer</div>' : ''}
+    <div class="tag-actions">
+      <button type="button" class="advance">Avancer →</button>
+      <button type="button" class="edit">Modifier</button>
+      ${o.status === 'prete' ? `<button type="button" class="notify">${needsRelance(o) ? 'Relancer le client' : 'Prévenir le client'}</button>` : ''}
+    </div>
+  </div>`;
+}
+function statusLabel(key){
+  const s = STATUSES.find(x=>x.key===key);
+  return s ? s.label : key;
+}
+function nextStatus(key){
+  const idx = STATUSES.findIndex(s=>s.key===key);
+  if(idx < 0 || idx >= STATUSES.length - 2) return null;
+  return STATUSES[idx+1].key;
+}
+
+function buildNotifyMessage(o){
+  const num = '#' + String(o.orderNumber||0).padStart(4,'0');
+  if(needsRelance(o)){
+    const due = amountDue(o);
+    return `Bonjour ${o.clientName}, petit rappel : votre commande ${num} (${productLabel(o)} ×${o.quantity}) est prête depuis ${daysReady(o)} jours et vous attend.` + (due > 0 ? ` Reste à régler : ${due.toFixed(2)} €.` : '') + ` Pouvez-vous passer la récupérer ? Merci !`;
+  }
+  return `Bonjour ${o.clientName}, votre commande ${num} (${productLabel(o)} ×${o.quantity}) est prête ! Vous pouvez venir la récupérer. Merci !`;
+}
+function notifyClient(o){
+  const contact = (o.clientContact || '').trim();
+  if(!contact){ showToast('Aucun contact renseigné pour ce client.'); return; }
+  const message = buildNotifyMessage(o);
+  if(contact.includes('@')){
+    const subject = encodeURIComponent((needsRelance(o) ? 'Rappel : votre commande ' : 'Votre commande ') + '#' + String(o.orderNumber||0).padStart(4,'0') + ' est prête');
+    const body = encodeURIComponent(message);
+    window.open(`mailto:${contact}?subject=${subject}&body=${body}`, '_blank');
+    showToast('Email préparé — vérifie et envoie-le dans la fenêtre ouverte.');
+  }else{
+    let digits = contact.replace(/[^\d+]/g, '');
+    if(digits.startsWith('+')) digits = digits.slice(1);
+    else if(digits.startsWith('00')) digits = digits.slice(2);
+    else if(digits.startsWith('0')) digits = '33' + digits.slice(1);
+    if(digits.length < 8){ showToast("Le contact ne ressemble ni à un email ni à un numéro de téléphone valide."); return; }
+    const text = encodeURIComponent(message);
+    window.open(`https://wa.me/${digits}?text=${text}`, '_blank');
+    showToast('Message WhatsApp préparé — vérifie et envoie-le dans la fenêtre ouverte.');
+  }
+}
+
+function renderKanban(list){
+  const board = $('#board');
+  const showArchived = archivesVisible();
+  const activeCols = STATUSES.map(s=>{
+    const items = sortOrders(list.filter(o=>o.status===s.key && !o.archived));
+    const isWide = s.key === 'attente_production';
+    const body = items.length ? items.map(tagCardHTML).join('') : '<div class="col-empty">Aucune commande</div>';
+    return `<div class="col ${isWide ? 'col-wide' : ''}" data-status="${s.key}">
+      <div class="col-head"><h3>${s.label}</h3><span class="col-count">${items.length}</span></div>
+      ${isWide ? `<div class="col-cards-grid">${body}</div>` : body}
+    </div>`;
+  }).join('');
+
+  let archiveCol = '';
+  if(showArchived){
+    const archivedItems = [...list.filter(o=>o.archived)].sort((a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0));
+    archiveCol = `<div class="col col-archive" data-status="archive">
+      <div class="col-head"><h3>Archives</h3><span class="col-count">${archivedItems.length}</span></div>
+      ${archivedItems.length ? archivedItems.map(tagCardHTML).join('') : '<div class="col-empty">Aucune commande archivée</div>'}
+    </div>`;
+  }
+
+  board.innerHTML = activeCols + archiveCol;
+
+  board.querySelectorAll('.tag .edit').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); openModal(btn.closest('.tag').dataset.id); });
+  });
+  board.querySelectorAll('.tag .advance').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const id = btn.closest('.tag').dataset.id;
+      const o = orders.find(x=>x.id===id);
+      const nxt = nextStatus(o.status);
+      if(nxt){
+        o.status = nxt;
+        if(nxt === 'livree'){
+          o.archived = true; o.thumbnails = []; o.imageCount = 0;
+          await purgeOrderImages(o.id);
+        }
+        const r = await saveOrder(o); render();
+        showToast(r.ok ? (nxt === 'livree' ? 'Commande livrée et archivée (images supprimées)' : 'Statut mis à jour') : ("Échec : " + r.error));
+      }
+    });
+  });
+  board.querySelectorAll('.tag .notify').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = btn.closest('.tag').dataset.id;
+      const o = orders.find(x=>x.id===id);
+      notifyClient(o);
+    });
+  });
+  board.querySelectorAll('.tag').forEach(t=>{
+    t.addEventListener('click', ()=> openModal(t.dataset.id));
+  });
+}
+
+function renderList(list){
+  const wrap = $('#listView');
+  const sorted = sortOrders(list);
+  wrap.innerHTML = `<table>
+    <thead><tr><th>N°</th><th>Client</th><th>Produit</th><th>Qté</th><th>Impression</th><th>Deadline</th><th>Statut</th><th>Paiement</th></tr></thead>
+    <tbody>
+      ${sorted.map(o=>`
+        <tr data-id="${o.id}" class="${o.archived?'is-archived':''}">
+          <td>#${String(o.orderNumber||0).padStart(4,'0')}</td>
+          <td>${o.clientName}</td>
+          <td>${productLabel(o)}</td>
+          <td>${o.quantity}</td>
+          <td>${o.printMethod}</td>
+          <td>${deadlineBadge(o)}</td>
+          <td>${statusLabel(o.status)}</td>
+          <td>${paymentBadge(o) || '—'}</td>
+        </tr>`).join('')}
+    </tbody>
+  </table>`;
+  wrap.querySelectorAll('tr[data-id]').forEach(tr=>{
+    tr.addEventListener('click', ()=> openModal(tr.dataset.id));
+  });
+}
+
+function render(){
+  renderStats();
+  renderQuota();
+  const list = filteredOrders();
+  $('#emptyState').style.display = orders.length === 0 ? 'block' : 'none';
+  $('#board').style.display = (currentView==='kanban' && orders.length>0) ? 'flex' : 'none';
+  $('#listView').style.display = (currentView==='list' && orders.length>0) ? 'block' : 'none';
+  if(orders.length>0){
+    if(currentView==='kanban') renderKanban(list); else renderList(list);
+  }
+}
+
+/* ---------- Image helpers ---------- */
+function renderExtraPreviews(){
+  $('#imgPreviewRow').innerHTML = (currentImages.extra||[]).map((im,i)=>`
+    <div class="img-preview"><img src="${im.url}" alt=""><button type="button" data-i="${i}">×</button></div>`).join('');
+  $('#imgPreviewRow').querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const im = currentImages.extra[Number(b.dataset.i)];
+      if(im && im.pendingFile && im.url && im.url.startsWith('blob:')) URL.revokeObjectURL(im.url);
+      currentImages.extra.splice(Number(b.dataset.i),1);
+      renderExtraPreviews();
+    });
+  });
+}
+$('#imgDrop').addEventListener('click', ()=> $('#imgInput').click());
+$('#imgInput').addEventListener('change', (e)=>{
+  const files = Array.from(e.target.files);
+  for(const f of files){
+    currentImages.extra.push({ name:f.name, file:f, url:URL.createObjectURL(f), path:null, pendingFile:true });
+  }
+  renderExtraPreviews();
+  e.target.value = '';
+});
+
+/* ---------- Order items (multi-produits, avec emplacements visuels par produit) ---------- */
+const ORDER_PRODUCTS = ['T-shirt', 'Sweat / Hoodie', 'Polo', 'Casquette', 'Sac tote', 'Autre'];
+const BLANK_OPTIONS = ['', '180', '220/250', 'Hoodie 440', 'Crewneck 440', 'Casquette', 'Ramener par le client', 'Autre'];
+let currentOrderItems = [];
+let activeItemId = null;
+let activeItemSlotKey = null;
+
+function emptySizesMap(){
+  const o = {};
+  TASK_SIZES.filter(s=>s).forEach(s=> o[s]=0);
+  return o;
+}
+function normalizeItemSizes(it){
+  if(it.sizes && Object.keys(it.sizes).length) return it.sizes;
+  const sizes = emptySizesMap();
+  if(it.taille && sizes.hasOwnProperty(it.taille)) sizes[it.taille] = Number(it.quantity)||0;
+  else if(Number(it.quantity)>0) sizes['M'] = Number(it.quantity)||0;
+  return sizes;
+}
+function newOrderItem(){
+  return { id: 'item_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), product:'T-shirt', productOther:'', blank:BLANK_OPTIONS[0], blankOther:'', sizes: emptySizesMap(), couleur:'', impression:'Sérigraphie', quantity:0, slots: emptySlots() };
+}
+function renderOrderItemsTable(){
+  $('#orderItemsBody').innerHTML = currentOrderItems.map(it=>{
+    it.sizes = normalizeItemSizes(it);
+    it.quantity = Object.values(it.sizes).reduce((a,b)=>a+(Number(b)||0),0);
+    return `
+    <div class="oi-card" data-id="${it.id}">
+      <div class="oi-card-row">
+        <div class="oi-cell oi-cell-product">
+          <label>Produit</label>
+          <select class="oi-product">${ORDER_PRODUCTS.map(p=>`<option value="${p}" ${it.product===p?'selected':''}>${p}</option>`).join('')}</select>
+          ${it.product === 'Autre' ? `<input type="text" class="oi-product-other" value="${(it.productOther||'').replace(/"/g,'&quot;')}" placeholder="Préciser">` : ''}
+        </div>
+        <div class="oi-cell oi-cell-blank">
+          <label>Blank</label>
+          <select class="oi-blank">${BLANK_OPTIONS.map(b=>`<option value="${b}" ${it.blank===b?'selected':''}>${b}</option>`).join('')}</select>
+          ${it.blank === 'Autre' ? `<input type="text" class="oi-blank-other" value="${(it.blankOther||'').replace(/"/g,'&quot;')}" placeholder="Préciser le blank">` : ''}
+        </div>
+        <div class="oi-cell oi-cell-couleur"><label>Couleur</label><input type="text" class="oi-couleur" value="${(it.couleur||'').replace(/"/g,'&quot;')}" placeholder="Ex. Noir"></div>
+        <div class="oi-cell oi-cell-impression"><label>Impression</label><select class="oi-impression">${TASK_PRINT_METHODS.filter(m=>m).map(m=>`<option value="${m}" ${it.impression===m?'selected':''}>${m}</option>`).join('')}</select></div>
+        ${currentOrderItems.length>1 ? '<button type="button" class="del-item">×</button>' : ''}
+      </div>
+      <div class="oi-sizes-row">
+        <label class="oi-sizes-label">Répartition des tailles — quantité totale : <span class="oi-total-badge">${it.quantity}</span></label>
+        <div class="oi-sizes-grid">
+          ${TASK_SIZES.filter(s=>s).map(s=>`
+            <div class="oi-size-cell">
+              <label>${s}</label>
+              <input type="number" min="0" class="oi-size-input" data-size="${s}" value="${it.sizes[s]||''}" placeholder="0">
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="oi-slots-row">
+        <label class="oi-slots-label">Emplacements du visuel de ce produit</label>
+        <div class="oi-slots-grid">
+          ${SLOTS.map(s=>{
+            const val = it.slots[s.key];
+            if(val){
+              return `<div class="oi-slot filled" data-slot="${s.key}">
+                <img src="${val.url}" alt="${s.label}">
+                <div class="oi-slot-tag">${s.label}</div>
+                <button type="button" class="oi-slot-clear" data-slot="${s.key}">×</button>
+              </div>`;
+            }
+            return `<div class="oi-slot" data-slot="${s.key}"><div class="oi-slot-plus">+</div><div class="oi-slot-label">${s.label}</div></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  $('#orderItemsBody').querySelectorAll('.oi-card').forEach(card=>{
+    const id = card.dataset.id;
+    const item = currentOrderItems.find(i=>i.id===id);
+    if(!item) return;
+    card.querySelector('.oi-product').addEventListener('change', (e)=>{ item.product = e.target.value; renderOrderItemsTable(); });
+    const otherInput = card.querySelector('.oi-product-other');
+    if(otherInput) otherInput.addEventListener('input', (e)=>{ item.productOther = e.target.value; });
+    card.querySelector('.oi-blank').addEventListener('change', (e)=>{ item.blank = e.target.value; renderOrderItemsTable(); });
+    const blankOtherInput = card.querySelector('.oi-blank-other');
+    if(blankOtherInput) blankOtherInput.addEventListener('input', (e)=>{ item.blankOther = e.target.value; });
+    card.querySelector('.oi-couleur').addEventListener('input', (e)=>{ item.couleur = e.target.value; });
+    card.querySelector('.oi-impression').addEventListener('change', (e)=>{ item.impression = e.target.value; });
+    card.querySelectorAll('.oi-size-input').forEach(input=>{
+      input.addEventListener('input', (e)=>{
+        item.sizes[e.target.dataset.size] = Number(e.target.value) || 0;
+        item.quantity = Object.values(item.sizes).reduce((a,b)=>a+(Number(b)||0),0);
+        const badge = card.querySelector('.oi-total-badge');
+        if(badge) badge.textContent = item.quantity;
+        updateOrderItemsTotal();
+      });
+    });
+    const delBtn = card.querySelector('.del-item');
+    if(delBtn) delBtn.addEventListener('click', ()=>{
+      currentOrderItems = currentOrderItems.filter(i=>i.id!==id);
+      renderOrderItemsTable();
+      updateOrderItemsTotal();
+    });
+    card.querySelectorAll('.oi-slot').forEach(slotEl=>{
+      slotEl.addEventListener('click', (e)=>{
+        if(e.target.closest('.oi-slot-clear')) return;
+        activeItemId = id;
+        activeItemSlotKey = slotEl.dataset.slot;
+        $('#itemSlotInput').click();
+      });
+    });
+    card.querySelectorAll('.oi-slot-clear').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const key = btn.dataset.slot;
+        const prev = item.slots[key];
+        if(prev && prev.pendingFile && prev.url && prev.url.startsWith('blob:')) URL.revokeObjectURL(prev.url);
+        item.slots[key] = null;
+        renderOrderItemsTable();
+      });
+    });
+  });
+  updateOrderItemsTotal();
+}
+$('#itemSlotInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file || !activeItemId || !activeItemSlotKey){ e.target.value=''; return; }
+  const item = currentOrderItems.find(i=>i.id===activeItemId);
+  if(item){
+    const prev = item.slots[activeItemSlotKey];
+    if(prev && prev.pendingFile && prev.url && prev.url.startsWith('blob:')) URL.revokeObjectURL(prev.url);
+    item.slots[activeItemSlotKey] = { name:file.name, file, url:URL.createObjectURL(file), path:null, pendingFile:true };
+    renderOrderItemsTable();
+  }
+  e.target.value = '';
+});
+function updateOrderItemsTotal(){
+  const total = currentOrderItems.reduce((sum,it)=> sum + (Number(it.quantity)||0), 0);
+  $('#orderItemsTotal').textContent = `Total : ${total} article${total>1?'s':''} sur ${currentOrderItems.length} ligne${currentOrderItems.length>1?'s':''}`;
+}
+$('#btnAddOrderItem').addEventListener('click', ()=>{
+  currentOrderItems.push(newOrderItem());
+  renderOrderItemsTable();
+});
+
+function updatePaymentHint(){
+  const price = Number($('#priceAmount').value)||0;
+  const dep = Number($('#depositAmount').value)||0;
+  if(!price){ $('#paymentHint').textContent=''; return; }
+  const reste = Math.max(0, price - dep);
+  $('#paymentHint').textContent = dep >= price ? 'Commande payée intégralement.' : `Reste dû : ${reste.toFixed(2)} €`;
+}
+$('#priceAmount').addEventListener('input', updatePaymentHint);
+$('#depositAmount').addEventListener('input', updatePaymentHint);
+function updateStartHint(){
+  const deadline = $('#deadline').value;
+  const prodTime = $('#prodTime').value;
+  if(!deadline || !prodTime){ $('#startHint').textContent=''; return; }
+  const fake = {deadline, prodTime, prodTimeUnit: $('#prodTimeUnit').value};
+  const sd = startDate(fake);
+  const overdue = new Date() >= sd;
+  $('#startHint').textContent = `À lancer au plus tard le ${sd.toLocaleDateString('fr-FR')}`;
+  $('#startHint').classList.toggle('strong', overdue);
+}
+['deadline','prodTime','prodTimeUnit'].forEach(id=> $('#'+id).addEventListener('input', updateStartHint));
+
+/* ---------- Client history ---------- */
+function updateHistory(){
+  const name = $('#clientName').value.trim().toLowerCase();
+  const list = name ? orders.filter(o=> o.clientName.trim().toLowerCase()===name && o.id!==currentEditId) : [];
+  if(!list.length){ $('#historyWrap').style.display='none'; return; }
+  $('#historyWrap').style.display='block';
+  $('#historyBox').innerHTML = list.sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt)).map(o=>`
+    <div class="hrow"><span>${productLabel(o)} · ${statusLabel(o.status)}</span><span>${formatDate(o.deadline)}</span></div>
+  `).join('');
+}
+$('#clientName').addEventListener('input', updateHistory);
+
+/* ---------- Modal ---------- */
+function resetForm(){
+  $('#orderForm').reset();
+  $('#prodTimeUnit').value = 'jours';
+  $('#status').value = 'attente_production';
+  $('#priority').value = 'normale';
+  currentOrderItems = [newOrderItem()];
+  renderOrderItemsTable();
+  $('#paymentHint').textContent=''; $('#startHint').textContent='';
+  $('#historyWrap').style.display='none';
+  currentImages = { extra:[] };
+  renderExtraPreviews();
+  $('#btnDelete').style.display = 'none';
+  $('#btnDuplicate').style.display = 'none';
+  $('#btnArchive').style.display = 'none';
+  $('#btnPrint').style.display = 'none';
+  $('#btnDownloadImages').style.display = 'none';
+  currentEditId = null;
+}
+
+async function openModal(id){
+  resetForm();
+  if(id){
+    const o = orders.find(x=>x.id===id);
+    currentEditId = id;
+    $('#modalTitle').textContent = 'Modifier la commande';
+    $('#modalSub').textContent = '#' + String(o.orderNumber||0).padStart(4,'0');
+    $('#clientName').value = o.clientName;
+    $('#clientContact').value = o.clientContact;
+    const isLegacy = !(o.items && o.items.length);
+    const rawItems = isLegacy
+      ? [{ id:'item_'+Date.now(), product:o.product||'T-shirt', productOther:o.productOther||'', blank:'', blankOther:'', taille:'', couleur:'', impression:o.printMethod||'Sérigraphie', quantity:o.quantity||1 }]
+      : JSON.parse(JSON.stringify(o.items));
+    currentOrderItems = rawItems.map(it=>({ blank:'', blankOther:'', ...it, slots: emptySlots() }));
+    $('#deadline').value = o.deadline;
+    $('#prodTime').value = o.prodTime || '';
+    $('#prodTimeUnit').value = o.prodTimeUnit || 'jours';
+    $('#status').value = o.status;
+    $('#priority').value = o.priority || 'normale';
+    $('#priceAmount').value = o.priceAmount || '';
+    $('#depositAmount').value = o.depositAmount || '';
+    $('#toCheckOnReceipt').checked = !!o.toCheckOnReceipt;
+    $('#notes').value = o.notes || '';
+    updatePaymentHint(); updateStartHint(); updateHistory();
+    $('#btnDelete').style.display = 'inline-block';
+    $('#btnDuplicate').style.display = 'inline-block';
+    $('#btnPrint').style.display = 'inline-block';
+    $('#btnDownloadImages').style.display = 'inline-block';
+    $('#btnArchive').style.display = ['livree','annulee'].includes(o.status) || o.archived ? 'inline-block' : 'none';
+    $('#btnArchive').textContent = o.archived ? 'Désarchiver' : 'Archiver';
+    $('#overlay').classList.add('open');
+    const imagesResult = await loadOrderImages(id);
+    currentImages = { extra: imagesResult.extra || [] };
+    currentOrderItems.forEach(it=>{
+      if(imagesResult.items[it.id]) it.slots = { ...it.slots, ...imagesResult.items[it.id] };
+      else if(isLegacy) it.slots = { ...it.slots, ...imagesResult.legacySlots };
+    });
+    renderOrderItemsTable();
+    renderExtraPreviews();
+    return;
+  }else{
+    $('#modalTitle').textContent = 'Nouvelle commande';
+    $('#modalSub').textContent = 'Renseigne les informations de la commande.';
+  }
+  $('#overlay').classList.add('open');
+}
+function closeModal(){ $('#overlay').classList.remove('open'); }
+
+$('#orderForm').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && e.target.tagName !== 'TEXTAREA'){
+    e.preventDefault();
+    $('#btnSave').click();
+  }
+});
+
+$('#btnSave').addEventListener('click', async (e)=>{
+  const submitBtn = $('#btnSave');
+  try{
+    [$('#clientName'), $('#clientContact'), $('#deadline')].forEach(el=> el.style.outline = '');
+    const missing = [];
+    if(!$('#clientName').value.trim()){ missing.push('Nom du client'); $('#clientName').style.outline = '2px solid var(--thread)'; }
+    if(!$('#clientContact').value.trim()){ missing.push('Contact'); $('#clientContact').style.outline = '2px solid var(--thread)'; }
+    if(!$('#deadline').value){ missing.push('Deadline'); $('#deadline').style.outline = '2px solid var(--thread)'; }
+    if(missing.length){
+      showToast('Champs manquants : ' + missing.join(', '));
+      return;
+    }
+    if(!currentOrderItems.length){
+      showToast('Ajoute au moins un produit à la commande.');
+      return;
+    }
+    const invalidQty = currentOrderItems.some(it => !(Number(it.quantity) > 0));
+    if(invalidQty){
+      showToast('Chaque produit doit avoir au moins une taille avec une quantité renseignée.');
+      return;
+    }
+    const items = currentOrderItems.map(it => ({
+      id: it.id,
+      product: it.product,
+      productOther: it.product === 'Autre' ? (it.productOther||'').trim() : '',
+      blank: it.blank || '',
+      blankOther: it.blank === 'Autre' ? (it.blankOther||'').trim() : '',
+      sizes: { ...it.sizes },
+      couleur: (it.couleur||'').trim(),
+      impression: it.impression,
+      quantity: Number(it.quantity) || 0
+    }));
+    const totalQuantity = items.reduce((sum,it)=> sum + it.quantity, 0);
+    const id = currentEditId || ('ord_' + Date.now() + '_' + Math.random().toString(36).slice(2,7));
+    const orderNumber = currentEditId
+      ? orders.find(o=>o.id===currentEditId).orderNumber
+      : (Math.max(0, ...orders.map(o=>o.orderNumber||0)) + 1);
+
+    const willBeLivree = $('#status').value === 'livree';
+    const hasPendingUploads = currentOrderItems.some(it => SLOTS.some(s=>it.slots[s.key] && it.slots[s.key].pendingFile)) || (currentImages.extra||[]).some(im=>im.pendingFile);
+    if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = (hasPendingUploads && !willBeLivree) ? 'Envoi des images…' : 'Enregistrement…'; }
+
+    let thumbnails = [];
+    let imageCount = 0;
+    if(willBeLivree){
+      if(currentEditId) await purgeOrderImages(id);
+    }else{
+      const imagesResult = await saveOrderImages(id, currentOrderItems, currentImages.extra);
+      if(!imagesResult){
+        showToast("Échec de l'envoi des images. Réessaie — tes fichiers sont toujours sur ton appareil.");
+        return;
+      }
+      const thumbSource = [];
+      currentOrderItems.forEach(it=> SLOTS.forEach(s=>{ if(it.slots[s.key]) thumbSource.push(it.slots[s.key]); }));
+      (currentImages.extra||[]).forEach(im=> thumbSource.push(im));
+      thumbnails = thumbSource.slice(0,3).map(im=>im.url);
+      imageCount = thumbSource.length;
+    }
+    if(submitBtn){ submitBtn.textContent = 'Enregistrement…'; }
+
+    const order = {
+      id, orderNumber,
+      clientName: $('#clientName').value.trim(),
+      clientContact: $('#clientContact').value.trim(),
+      items,
+      quantity: totalQuantity,
+      product: items.length === 1 ? items[0].product : `${items.length} produits`,
+      productOther: items.length === 1 ? items[0].productOther : '',
+      printMethod: items.length === 1 ? items[0].impression : 'Divers',
+      deadline: $('#deadline').value,
+      prodTime: $('#prodTime').value,
+      prodTimeUnit: $('#prodTimeUnit').value,
+      status: $('#status').value,
+      priority: $('#priority').value,
+      priceAmount: $('#priceAmount').value,
+      depositAmount: $('#depositAmount').value,
+      toCheckOnReceipt: $('#toCheckOnReceipt').checked,
+      notes: $('#notes').value.trim(),
+      thumbnails,
+      imageCount,
+      archived: willBeLivree ? true : (currentEditId ? (orders.find(o=>o.id===currentEditId).archived || false) : false),
+      createdAt: currentEditId ? (orders.find(o=>o.id===currentEditId).createdAt) : new Date().toISOString()
+    };
+    if(currentEditId){
+      const prevOrder = orders.find(o=>o.id===currentEditId);
+      if(prevOrder && prevOrder.readyAt) order.readyAt = prevOrder.readyAt;
+      if(prevOrder && prevOrder.deliveredAt) order.deliveredAt = prevOrder.deliveredAt;
+    }
+
+    const wasEditing = !!currentEditId;
+    if(wasEditing){
+      const idx = orders.findIndex(o=>o.id===currentEditId);
+      orders[idx] = order;
+    }else{
+      orders.push(order);
+    }
+
+    const orderResult = await saveOrder(order);
+    render();
+
+    if(!orderResult.ok){
+      showToast("Échec de l'enregistrement : " + orderResult.error);
+      return;
+    }
+    const capWarn = capacityWarning(order);
+    showToast(capWarn || (willBeLivree ? 'Commande livrée et archivée (images supprimées)' : (wasEditing ? 'Commande mise à jour' : 'Commande créée')));
+    closeModal();
+  }catch(err){
+    console.error('Erreur enregistrement commande:', err);
+    showToast("Une erreur est survenue, réessaie (" + (err && err.message ? err.message : 'inconnue') + ").");
+    render();
+  }finally{
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enregistrer'; }
+  }
+});
+
+$('#btnDelete').addEventListener('click', async ()=>{
+  if(!currentEditId) return;
+  const o = orders.find(x=>x.id===currentEditId);
+  const ok = await askConfirm(`Supprimer définitivement la commande de ${o.clientName} (${productLabel(o)}) ? Cette action est irréversible.`);
+  if(!ok) return;
+  orders = orders.filter(x=>x.id !== currentEditId);
+  await deleteOrderCompletely(currentEditId);
+  closeModal(); render();
+  showToast('Commande supprimée');
+});
+
+$('#btnDuplicate').addEventListener('click', async ()=>{
+  if(!currentEditId) return;
+  const src = orders.find(x=>x.id===currentEditId);
+  const srcImages = await loadOrderImages(currentEditId);
+  const newId = 'ord_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  showToast('Duplication en cours…');
+  const srcItems = (src.items && src.items.length) ? src.items : [{ id:'__legacy__' }];
+  const newItems = srcItems.map(it => ({ ...it, id: 'item_'+Date.now()+'_'+Math.random().toString(36).slice(2,5) }));
+  const isLegacySrc = !(src.items && src.items.length);
+  const withSrcId = newItems.map((it,i)=>({ ...it, __srcId: isLegacySrc ? '__legacy__' : srcItems[i].id }));
+  if(isLegacySrc) srcImages.items['__legacy__'] = srcImages.legacySlots;
+  const { byItem, extra: copiedExtra } = await copyImagesToNewOrder(srcImages, newId, withSrcId);
+
+  const thumbSource = [];
+  newItems.forEach(it=> SLOTS.forEach(s=>{ if(byItem[it.id] && byItem[it.id][s.key]) thumbSource.push(byItem[it.id][s.key]); }));
+  copiedExtra.forEach(im=> thumbSource.push(im));
+
+  const copy = {
+    ...src, id:newId, items: newItems.map(({__srcId, ...rest})=>rest),
+    orderNumber: Math.max(0, ...orders.map(o=>o.orderNumber||0)) + 1,
+    status:'attente_production', archived:false,
+    thumbnails: thumbSource.slice(0,3).map(im=>im.url),
+    imageCount: thumbSource.length,
+    createdAt: new Date().toISOString()
+  };
+  orders.push(copy);
+  const dupResult = await saveOrder(copy);
+  if(db){
+    const imagesRef = db.collection('orders').doc(newId).collection('images');
+    const batch = db.batch();
+    newItems.forEach(it=>{
+      SLOTS.forEach(s=>{ if(byItem[it.id] && byItem[it.id][s.key]) batch.set(imagesRef.doc(`item_${it.id}_${s.key}`), byItem[it.id][s.key]); });
+    });
+    copiedExtra.forEach((im,i)=> batch.set(imagesRef.doc('extra_'+i), im));
+    try{ await batch.commit(); }catch(e){}
+  }
+  closeModal(); render();
+  showToast(dupResult.ok ? ('Commande dupliquée en #' + String(copy.orderNumber).padStart(4,'0')) : ("Échec : " + dupResult.error));
+});
+
+$('#btnArchive').addEventListener('click', async ()=>{
+  if(!currentEditId) return;
+  const o = orders.find(x=>x.id===currentEditId);
+  const archiving = !o.archived;
+  if(archiving){
+    const ok = await askConfirm("Archiver cette commande supprimera définitivement ses images (pour libérer la base). L'historique de la commande reste consultable, mais les visuels ne seront plus récupérables. Continuer ?");
+    if(!ok) return;
+  }
+  o.archived = archiving;
+  if(archiving){
+    await purgeOrderImages(currentEditId);
+    o.thumbnails = [];
+    o.imageCount = 0;
+  }
+  const archResult = await saveOrder(o);
+  closeModal(); render();
+  showToast(archResult.ok ? (o.archived ? 'Commande archivée, images supprimées' : 'Commande désarchivée') : ("Échec : " + archResult.error));
+});
+
+$('#btnPrint').addEventListener('click', ()=>{
+  if(!currentEditId) return;
+  const o = orders.find(x=>x.id===currentEditId);
+  printOrder(o);
+});
+
+async function triggerDownload(url, filename){
+  try{
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+  }catch(e){
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.target = '_blank';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+function delay(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function extOf(name){
+  const m = /\.[a-zA-Z0-9]+$/.exec(name||'');
+  return m ? m[0] : '.jpg';
+}
+function slugify(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'visuel';
+}
+async function downloadOrderImages(o){
+  const num = String(o.orderNumber||0).padStart(4,'0');
+  const items = [];
+  currentOrderItems.forEach(it=>{
+    SLOTS.forEach(s=>{
+      if(it.slots[s.key]) items.push([it.slots[s.key].url, `commande-${num}-${slugify(itemLabel(it).split(' — ')[0])}-${s.key}${extOf(it.slots[s.key].name)}`]);
+    });
+  });
+  (currentImages.extra||[]).forEach((im,i)=> items.push([im.url, `commande-${num}-supplementaire-${i+1}${extOf(im.name)}`]));
+  if(!items.length){ showToast('Aucune image à télécharger pour cette commande'); return; }
+  for(const [url, filename] of items){
+    await triggerDownload(url, filename);
+    await delay(300);
+  }
+  showToast(`${items.length} image(s) téléchargée(s)`);
+}
+$('#btnDownloadImages').addEventListener('click', ()=>{
+  if(!currentEditId) return;
+  const o = orders.find(x=>x.id===currentEditId);
+  downloadOrderImages(o);
+});
+
+function printOrder(o){
+  const itemsFigsHtml = currentOrderItems.map(it=>{
+    const figs = SLOTS.filter(s=>it.slots[s.key]).map(s=>`<figure><img src="${it.slots[s.key].url}"><figcaption>${s.label}</figcaption></figure>`).join('');
+    return figs ? `<h3 style="font-size:13px;margin:14px 0 4px;">${itemLabel(it)}</h3><div class="p-imgs">${figs}</div>` : '';
+  }).join('');
+  const extraFigs = (currentImages.extra||[]).map((im,i)=>`<figure><img src="${im.url}"><figcaption>Visuel ${i+1}</figcaption></figure>`).join('');
+  $('#printArea').innerHTML = `
+    <h2>Bon de commande #${String(o.orderNumber||0).padStart(4,'0')}</h2>
+    <table>
+      <tr><td><b>Client</b></td><td>${o.clientName}</td></tr>
+      <tr><td><b>Contact</b></td><td>${o.clientContact}</td></tr>
+      <tr><td><b>Quantité totale</b></td><td>${o.quantity}</td></tr>
+      <tr><td><b>Produits</b></td><td>${(o.items && o.items.length ? o.items.map(itemLabel) : [productLabel(o) + ' — ' + o.printMethod + ' ×' + o.quantity]).join('<br>')}</td></tr>
+      ${o.sizes ? `<tr><td><b>Tailles</b></td><td>${sizesText(o.sizes)}</td></tr>` : ''}
+      <tr><td><b>Deadline</b></td><td>${formatDate(o.deadline)}</td></tr>
+      <tr><td><b>Temps de production estimé</b></td><td>${o.prodTime ? o.prodTime+' '+o.prodTimeUnit : '—'}</td></tr>
+      <tr><td><b>Statut</b></td><td>${statusLabel(o.status)}</td></tr>
+      ${o.priceAmount ? `<tr><td><b>Prix total</b></td><td>${Number(o.priceAmount).toFixed(2)} €</td></tr>` : ''}
+      ${o.depositAmount ? `<tr><td><b>Acompte versé</b></td><td>${Number(o.depositAmount).toFixed(2)} €</td></tr>` : ''}
+      ${o.notes ? `<tr><td><b>Notes</b></td><td>${o.notes}</td></tr>` : ''}
+    </table>
+    ${itemsFigsHtml}
+    ${extraFigs ? `<h3 style="font-size:13px;margin:14px 0 4px;">Images supplémentaires</h3><div class="p-imgs">${extraFigs}</div>` : ''}
+  `;
+  window.print();
+}
+
+/* ---------- Full backup / restore ---------- */
+async function exportAllData(){
+  if(!orders.length){ showToast('Aucune commande à sauvegarder'); return; }
+  showToast('Préparation de la sauvegarde…');
+  const images = {};
+  for(const o of orders){
+    images[o.id] = await loadOrderImages(o.id);
+  }
+  const payload = { exportedAt: new Date().toISOString(), orders, images };
+  const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'sauvegarde-commandes-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Sauvegarde téléchargée — garde ce fichier en lieu sûr');
+}
+function importAllData(file){
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    let payload;
+    try{ payload = JSON.parse(e.target.result); }
+    catch(err){ showToast('Fichier de sauvegarde invalide'); return; }
+    if(!payload || !Array.isArray(payload.orders)){ showToast('Fichier de sauvegarde invalide'); return; }
+    const ok = await askConfirm(`Importer ${payload.orders.length} commande(s) ? Cela remplacera les commandes existantes dans la base partagée.`);
+    if(!ok) return;
+    orders = payload.orders;
+    for(const o of orders){
+      await saveOrder(o);
+    }
+    const images = payload.images || {};
+    for(const id of Object.keys(images)){
+      await saveOrderImages(id, images[id]);
+    }
+    render();
+    showToast('Sauvegarde restaurée');
+  };
+  reader.readAsText(file);
+}
+$('#btnBackup').addEventListener('click', exportAllData);
+$('#btnRestore').addEventListener('click', ()=> $('#restoreInput').click());
+$('#restoreInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) importAllData(file);
+  e.target.value = '';
+});
+
+/* ---------- CSV export ---------- */
+function csvEscape(v){ v = String(v ?? ''); if(/[;"\n]/.test(v)) v = '"' + v.replace(/"/g,'""') + '"'; return v; }
+function exportCSV(source, filename, withTotals){
+  const headers = ['Numéro','Client','Contact','Produit','Détail des produits','Quantité totale','Tailles','Méthode','Deadline','Temps de production','Statut','Priorité','Prix (€)','Acompte (€)','Reste dû (€)','Notes'];
+  const rows = (source || orders).map(o=>{
+    const price = Number(o.priceAmount)||0, dep = Number(o.depositAmount)||0;
+    const detail = (o.items && o.items.length) ? o.items.map(itemLabel).join(' | ') : '';
+    return [
+      '#'+String(o.orderNumber||0).padStart(4,'0'), o.clientName, o.clientContact, productLabel(o), detail,
+      o.quantity, sizesText(o.sizes), o.printMethod, o.deadline,
+      (o.prodTime ? o.prodTime+' '+o.prodTimeUnit : ''),
+      statusLabel(o.status), PRIORITY_LABEL[o.priority]||'Normale',
+      price || '', dep || '', price ? Math.max(0,price-dep).toFixed(2) : '',
+      (o.notes||'').replace(/\n/g,' ')
+    ];
+  });
+  if(withTotals){
+    const list = source;
+    const tp = list.reduce((n,o)=> n + (Number(o.priceAmount)||0), 0);
+    const td = list.reduce((n,o)=> n + (Number(o.depositAmount)||0), 0);
+    const tr = list.reduce((n,o)=> n + amountDue(o), 0);
+    rows.push(Array(headers.length).fill(''));
+    rows.push(['TOTAL','','','','','','','','','','','', tp.toFixed(2), td.toFixed(2), tr.toFixed(2), list.length + ' commande(s)']);
+  }
+  const csv = [headers, ...rows].map(r=> r.map(csvEscape).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename || 'commandes.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+$('#btnExport').addEventListener('click', ()=> exportCSV());
+$('#btnExportMonth').addEventListener('click', ()=>{
+  const m = $('#exportMonth').value;
+  if(!m){ showToast("Choisis d'abord un mois à côté du bouton."); return; }
+  const list = orders.filter(o=> o.status === 'livree' && String(o.deliveredAt || o.deadline || '').slice(0,7) === m);
+  if(!list.length){ showToast('Aucune commande livrée pour ' + m + '.'); return; }
+  exportCSV(list, 'comptabilite-' + m + '.csv', true);
+});
+
+/* ---------- Wiring ---------- */
+$('#btnCancel').addEventListener('click', closeModal);
+$('#overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
+$('#btnNew').addEventListener('click', ()=> openModal(null));
+$('#btnNewEmpty').addEventListener('click', ()=> openModal(null));
+
+$('#search').addEventListener('input', render);
+$('#showArchived').addEventListener('change', render);
+$('#sortMode').addEventListener('change', render);
+
+$('#btnKanban').addEventListener('click', ()=>{
+  currentView='kanban'; $('#btnKanban').classList.add('active'); $('#btnList').classList.remove('active'); render();
+});
+$('#btnList').addEventListener('click', ()=>{
+  currentView='list'; $('#btnList').classList.add('active'); $('#btnKanban').classList.remove('active'); render();
+});
+
+/* ---------- Marques ---------- */
+let brands = [];
+let currentEditingBrandId = null;
+let currentTasksBrandId = null;
+let currentBrandProducts = [];
+let currentProductImages = [];
+let currentEditProductId = null;
+let currentTasks = [];
+let brandsLoaded = false;
+
+async function loadBrands(){
+  if(!db){ brands = []; renderBrands(); return; }
+  try{
+    const snap = await withTimeout(db.collection('brands').get(), 12000);
+    brands = snap.docs.map(d=>d.data());
+  }catch(e){
+    brands = [];
+    showToast('Erreur de chargement des marques (' + e.message + ')');
+  }
+  renderBrands();
+}
+async function saveBrandDoc(brand){
+  if(!db) return { ok:false, error:'Firebase non configuré' };
+  try{
+    await withTimeout(db.collection('brands').doc(brand.id).set(brand), 12000);
+    return { ok:true };
+  }catch(e){
+    return { ok:false, error: (e && e.message) ? e.message : 'erreur inconnue' };
+  }
+}
+async function deleteBrandCompletely(id){
+  if(!db) return;
+  try{
+    const tasksSnap = await withTimeout(db.collection('brands').doc(id).collection('tasks').get(), 12000);
+    const batch = db.batch();
+    tasksSnap.forEach(d=> batch.delete(d.ref));
+    batch.delete(db.collection('brands').doc(id));
+    await withTimeout(batch.commit(), 12000);
+  }catch(e){
+    showToast('Erreur de suppression (' + e.message + ')');
+  }
+}
+async function loadBrandTasks(brandId){
+  if(!db) return [];
+  try{
+    const snap = await withTimeout(db.collection('brands').doc(brandId).collection('tasks').get(), 12000);
+    return snap.docs.map(d=>d.data()).map(t=>{
+      if(typeof t.readyQty === 'undefined') t.readyQty = t.done ? (Number(t.quantity)||0) : 0;
+      return t;
+    }).sort((a,b)=> (a.createdAt||'').localeCompare(b.createdAt||''));
+  }catch(e){
+    return [];
+  }
+}
+async function saveTaskDoc(brandId, task){
+  if(!db) return false;
+  try{
+    await withTimeout(db.collection('brands').doc(brandId).collection('tasks').doc(task.id).set(task), 10000);
+    return true;
+  }catch(e){
+    showToast('Erreur : ' + (e && e.message ? e.message : 'inconnue'));
+    return false;
+  }
+}
+async function deleteTaskDoc(brandId, taskId){
+  if(!db) return;
+  try{ await withTimeout(db.collection('brands').doc(brandId).collection('tasks').doc(taskId).delete(), 10000); }catch(e){}
+}
+
+function brandCardHTML(b){
+  const total = b.taskTotal || 0;
+  const done = b.taskDone || 0;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const isQuiet = total === 0 || done === total;
+  return `<div class="brand-card ${isQuiet?'quiet':''}" data-id="${b.id}">
+    <h3>${b.name}</h3>
+    ${b.contact ? `<div class="contact">${b.contact}</div>` : ''}
+    <div class="brand-progress">${done}/${total} commandes faites</div>
+    <div class="brand-bar"><div class="brand-bar-fill" style="width:${pct}%"></div></div>
+    ${b.oldestPendingDate ? `<div class="brand-oldest">Commande en attente depuis le ${formatDate(b.oldestPendingDate)}</div>` : ''}
+    <div class="brand-card-actions">
+      <button type="button" class="edit-brand">Modifier</button>
+    </div>
+  </div>`;
+}
+function renderBrands(){
+  const q = $('#brandSearch').value.trim().toLowerCase();
+  const list = brands
+    .filter(b=> !q || b.name.toLowerCase().includes(q))
+    .sort((a,b)=>{
+      if(a.oldestPendingDate && b.oldestPendingDate) return a.oldestPendingDate < b.oldestPendingDate ? -1 : 1;
+      if(a.oldestPendingDate) return -1;
+      if(b.oldestPendingDate) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  $('#brandsEmpty').style.display = brands.length===0 ? 'block' : 'none';
+  $('#brandsGrid').style.display = brands.length>0 ? 'grid' : 'none';
+  $('#brandsGrid').innerHTML = list.map(brandCardHTML).join('');
+  $('#brandsGrid').querySelectorAll('.brand-card').forEach(card=>{
+    card.addEventListener('click', (e)=>{
+      if(e.target.closest('.edit-brand')) return;
+      openTasksModal(card.dataset.id);
+    });
+  });
+  $('#brandsGrid').querySelectorAll('.edit-brand').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); openBrandModal(btn.closest('.brand-card').dataset.id); });
+  });
+}
+
+function resetBrandForm(){
+  $('#brandForm').reset();
+  $('#btnDeleteBrand').style.display = 'none';
+  currentEditingBrandId = null;
+  $('#brandModalTitle').textContent = 'Nouvelle marque';
+}
+function openBrandModal(id){
+  resetBrandForm();
+  if(id){
+    const b = brands.find(x=>x.id===id);
+    currentEditingBrandId = id;
+    $('#brandModalTitle').textContent = 'Modifier la marque';
+    $('#brandName').value = b.name;
+    $('#brandContact').value = b.contact || '';
+    $('#brandNotes').value = b.notes || '';
+    $('#btnDeleteBrand').style.display = 'inline-block';
+  }
+  $('#brandOverlay').classList.add('open');
+}
+function closeBrandModal(){ $('#brandOverlay').classList.remove('open'); }
+
+$('#btnBrandSave').addEventListener('click', async ()=>{
+  const name = $('#brandName').value.trim();
+  if(!name){ showToast('Le nom de la marque est obligatoire'); return; }
+  const id = currentEditingBrandId || ('brand_' + Date.now() + '_' + Math.random().toString(36).slice(2,7));
+  const existing = currentEditingBrandId ? brands.find(b=>b.id===currentEditingBrandId) : null;
+  const brand = {
+    id, name,
+    contact: $('#brandContact').value.trim(),
+    notes: $('#brandNotes').value.trim(),
+    taskTotal: existing ? (existing.taskTotal||0) : 0,
+    taskDone: existing ? (existing.taskDone||0) : 0,
+    createdAt: existing ? existing.createdAt : new Date().toISOString()
+  };
+  if(currentEditingBrandId){
+    const idx = brands.findIndex(b=>b.id===currentEditingBrandId);
+    brands[idx] = brand;
+  }else{
+    brands.push(brand);
+  }
+  const r = await saveBrandDoc(brand);
+  renderBrands();
+  if(!r.ok){ showToast('Échec : ' + r.error); return; }
+  showToast(currentEditingBrandId ? 'Marque mise à jour' : 'Marque créée');
+  closeBrandModal();
+});
+$('#btnDeleteBrand').addEventListener('click', async ()=>{
+  if(!currentEditingBrandId) return;
+  const b = brands.find(x=>x.id===currentEditingBrandId);
+  const ok = await askConfirm(`Supprimer définitivement la marque "${b.name}" et toutes ses lignes de suivi ? Cette action est irréversible.`);
+  if(!ok) return;
+  brands = brands.filter(x=>x.id!==currentEditingBrandId);
+  await deleteBrandCompletely(currentEditingBrandId);
+  renderBrands();
+  closeBrandModal();
+  showToast('Marque supprimée');
+});
+$('#btnBrandCancel').addEventListener('click', closeBrandModal);
+$('#brandOverlay').addEventListener('click', (e)=>{ if(e.target.id==='brandOverlay') closeBrandModal(); });
+$('#btnNewBrand').addEventListener('click', ()=> openBrandModal(null));
+$('#btnNewBrandEmpty').addEventListener('click', ()=> openBrandModal(null));
+$('#brandSearch').addEventListener('input', renderBrands);
+
+async function openTasksModal(brandId){
+  currentTasksBrandId = brandId;
+  const b = brands.find(x=>x.id===brandId);
+  $('#tasksModalTitle').textContent = b.name;
+  $('#tasksModalSub').textContent = 'Commandes à produire pour cette marque';
+  $('#tasksModalPhone').value = b.contact || '';
+  $('#showDoneTasks').checked = false;
+  currentTasks = await loadBrandTasks(brandId);
+  currentBrandProducts = await loadBrandProducts(brandId);
+  renderTasksTable();
+  showTasksView('default');
+  $('#tasksOverlay').classList.add('open');
+  updateBrandSummary();
+}
+$('#showDoneTasks').addEventListener('change', renderTasksTable);
+$('#tasksModalPhone').addEventListener('change', async (e)=>{
+  const b = brands.find(x=>x.id===currentTasksBrandId);
+  if(!b) return;
+  b.contact = e.target.value.trim();
+  await saveBrandDoc(b);
+});
+function printBrandSummary(){
+  const b = brands.find(x=>x.id===currentTasksBrandId);
+  if(!b) return;
+  const todo = currentTasks.filter(t=>!t.done);
+  if(!todo.length){ showToast('Aucune commande à faire pour cette marque.'); return; }
+  const rows = todo.map(t=>{
+    const blankLabel = t.blank === 'Autre' ? (t.blankOther||'') : (t.blank||'—');
+    const ready = Number(t.readyQty)||0;
+    const qty = Number(t.quantity)||0;
+    const statut = t.outOfStock ? 'Rupture de stock' : (ready>0 ? `Partielle (${ready}/${qty})` : 'À faire');
+    return `<tr>
+      <td>${t.nom||'—'}</td>
+      <td>${blankLabel}</td>
+      <td>${t.taille||'—'}</td>
+      <td>${t.couleur||'—'}</td>
+      <td>${t.impression||'—'}</td>
+      <td>${qty}</td>
+      <td>${statut}</td>
+      <td>${t.remarque||''}</td>
+    </tr>`;
+  }).join('');
+  $('#printArea').innerHTML = `
+    <h2>Résumé des commandes à faire — ${b.name}</h2>
+    <div style="font-size:12px;color:#555;margin-bottom:6px;">Imprimé le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})} — ${todo.length} ligne(s) restante(s)</div>
+    <table>
+      <thead><tr>
+        <th>Nom</th><th>Blank</th><th>Taille</th><th>Couleur</th><th>Impression</th><th>Qté</th><th>Statut</th><th>Remarque</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  window.print();
+}
+$('#btnPrintBrandSummary').addEventListener('click', printBrandSummary);
+function closeTasksModal(){
+  $('#tasksOverlay').classList.remove('open');
+  currentTasksBrandId = null;
+  renderBrands();
+}
+function showTasksView(view){
+  $('#tasksViewDefault').style.display = view==='default' ? 'block' : 'none';
+  $('#tasksViewNewProduct').style.display = view==='newProduct' ? 'block' : 'none';
+  $('#tasksViewNewOrder').style.display = view==='newOrder' ? 'block' : 'none';
+}
+
+/* ---------- Catalogue produits (par marque) ---------- */
+async function loadBrandProducts(brandId){
+  if(!db) return [];
+  try{
+    const snap = await withTimeout(db.collection('brands').doc(brandId).collection('products').get(), 10000);
+    return snap.docs.map(d=>d.data());
+  }catch(e){ return []; }
+}
+async function saveProductDoc(brandId, product){
+  if(!db) return { ok:false, error:'Firebase non configuré' };
+  try{
+    await withTimeout(db.collection('brands').doc(brandId).collection('products').doc(product.id).set(product), 10000);
+    return { ok:true };
+  }catch(e){ return { ok:false, error: e && e.message ? e.message : 'inconnue' }; }
+}
+async function deleteProductDoc(brandId, productId){
+  if(!db) return;
+  try{ await withTimeout(db.collection('brands').doc(brandId).collection('products').doc(productId).delete(), 10000); }catch(e){}
+}
+async function saveProductImages(brandId, productId, images){
+  if(!storageRef) return images;
+  for(let i=0;i<images.length;i++){
+    const im = images[i];
+    if(im && im.file){
+      try{
+        const path = `brands/${brandId}/products/${productId}/img_${Date.now()}_${i}`;
+        const url = await uploadImageFile(im.file, path);
+        images[i] = { name: im.name, url, path };
+      }catch(e){}
+    }
+  }
+  return images;
+}
+
+function productMetaLine(p){
+  const bits = [];
+  if(p.couleurs) bits.push(p.couleurs);
+  if(p.impression) bits.push(p.impression);
+  const blankLabel = p.blank === 'Autre' ? p.blankOther : p.blank;
+  if(blankLabel) bits.push(blankLabel);
+  return bits.join(' · ');
+}
+
+function renderProductImgRow(){
+  const boxes = currentProductImages.map((im,i)=>`
+    <div class="product-img-slot filled" data-i="${i}">
+      <img src="${im.url}" alt="">
+      <button type="button" class="rm" data-i="${i}">×</button>
+    </div>`).join('');
+  const addBox = currentProductImages.length < 5 ? `<div class="product-img-slot" id="prodImgAddBox"><div class="plus">+</div></div>` : '';
+  $('#prodImgRow').innerHTML = boxes + addBox;
+  $('#prodImgRow').querySelectorAll('.rm').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const idx = Number(btn.dataset.i);
+      const im = currentProductImages[idx];
+      if(im && im.pendingFile && im.url && im.url.startsWith('blob:')) URL.revokeObjectURL(im.url);
+      currentProductImages.splice(idx,1);
+      renderProductImgRow();
+    });
+  });
+  const addBoxEl = document.getElementById('prodImgAddBox');
+  if(addBoxEl) addBoxEl.addEventListener('click', ()=> $('#prodImgInput').click());
+}
+$('#prodImgInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file || currentProductImages.length >= 5) return;
+  currentProductImages.push({ name:file.name, file, url:URL.createObjectURL(file), path:null, pendingFile:true });
+  renderProductImgRow();
+});
+$('#prodBlank').addEventListener('change', (e)=>{
+  $('#prodBlankOther').style.display = e.target.value === 'Autre' ? 'block' : 'none';
+});
+
+function renderProductsCatalog(){
+  if(!currentBrandProducts.length){
+    $('#productsCatalog').innerHTML = '<div class="product-empty">Aucun produit créé pour cette marque pour l\'instant.</div>';
+    return;
+  }
+  $('#productsCatalog').innerHTML = currentBrandProducts.map(p=>`
+    <div class="product-card" data-id="${p.id}">
+      ${p.images && p.images[0] ? `<img class="product-card-img" src="${p.images[0].url}" alt="">` : `<div class="product-card-img"></div>`}
+      <div class="product-card-name">${p.nom || '(sans nom)'}</div>
+      <div class="product-card-meta">${productMetaLine(p)}</div>
+      <div class="product-card-actions">
+        <button type="button" class="edit-prod">Modifier</button>
+        <button type="button" class="danger del-prod">Supprimer</button>
+      </div>
+    </div>`).join('');
+  $('#productsCatalog').querySelectorAll('.edit-prod').forEach(btn=>{
+    btn.addEventListener('click', ()=> openProductForEdit(btn.closest('.product-card').dataset.id));
+  });
+  $('#productsCatalog').querySelectorAll('.del-prod').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.closest('.product-card').dataset.id;
+      const ok = await askConfirm('Supprimer ce produit du catalogue ? Les commandes déjà créées à partir de lui ne seront pas affectées.');
+      if(!ok) return;
+      await deleteProductDoc(currentTasksBrandId, id);
+      currentBrandProducts = currentBrandProducts.filter(p=>p.id!==id);
+      renderProductsCatalog();
+      showToast('Produit supprimé');
+    });
+  });
+}
+function resetProductForm(){
+  currentEditProductId = null;
+  $('#prodNom').value = '';
+  $('#prodCouleurs').value = '';
+  $('#prodImpression').value = TASK_PRINT_METHODS.filter(m=>m)[0] || '';
+  $('#prodBlank').value = BLANK_OPTIONS[0];
+  $('#prodBlankOther').value = '';
+  $('#prodBlankOther').style.display = 'none';
+  $('#prodRemarque').value = '';
+  currentProductImages = [];
+  renderProductImgRow();
+  $('#btnSaveProduct').textContent = 'Enregistrer le produit';
+  renderProductsCatalog();
+}
+function openProductForEdit(id){
+  const p = currentBrandProducts.find(x=>x.id===id);
+  if(!p) return;
+  currentEditProductId = id;
+  $('#prodNom').value = p.nom || '';
+  $('#prodCouleurs').value = p.couleurs || '';
+  $('#prodImpression').value = p.impression || '';
+  $('#prodBlank').value = p.blank || BLANK_OPTIONS[0];
+  $('#prodBlankOther').value = p.blankOther || '';
+  $('#prodBlankOther').style.display = p.blank === 'Autre' ? 'block' : 'none';
+  $('#prodRemarque').value = p.remarque || '';
+  currentProductImages = JSON.parse(JSON.stringify(p.images || []));
+  renderProductImgRow();
+  $('#btnSaveProduct').textContent = 'Mettre à jour le produit';
+  showTasksView('newProduct');
+}
+$('#btnShowNewProduct').addEventListener('click', ()=>{ resetProductForm(); showTasksView('newProduct'); });
+$('#btnBackFromProduct').addEventListener('click', ()=> showTasksView('default'));
+$('#btnSaveProduct').addEventListener('click', async ()=>{
+  const nom = $('#prodNom').value.trim();
+  if(!nom){ showToast('Le nom du produit est obligatoire.'); return; }
+  const id = currentEditProductId || ('prod_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+  const btn = $('#btnSaveProduct');
+  btn.disabled = true; btn.textContent = 'Enregistrement…';
+  const images = await saveProductImages(currentTasksBrandId, id, currentProductImages);
+  const existing = currentBrandProducts.find(p=>p.id===id);
+  const product = {
+    id, nom,
+    couleurs: $('#prodCouleurs').value.trim(),
+    impression: $('#prodImpression').value,
+    blank: $('#prodBlank').value,
+    blankOther: $('#prodBlank').value === 'Autre' ? $('#prodBlankOther').value.trim() : '',
+    remarque: $('#prodRemarque').value.trim(),
+    images,
+    createdAt: existing ? existing.createdAt : new Date().toISOString()
+  };
+  const result = await saveProductDoc(currentTasksBrandId, product);
+  btn.disabled = false;
+  if(!result.ok){ showToast('Erreur : ' + (result.error||'inconnue')); btn.textContent = currentEditProductId ? 'Mettre à jour le produit' : 'Enregistrer le produit'; return; }
+  const idx = currentBrandProducts.findIndex(p=>p.id===id);
+  if(idx > -1) currentBrandProducts[idx] = product; else currentBrandProducts.push(product);
+  const wasEditing = !!currentEditProductId;
+  resetProductForm();
+  showToast(wasEditing ? 'Produit mis à jour' : 'Produit créé');
+});
+
+/* ---------- Nouvelle commande depuis le catalogue ---------- */
+function renderOrderCatalog(){
+  if(!currentBrandProducts.length){
+    $('#orderCatalog').innerHTML = '<div class="order-empty">Aucun produit dans le catalogue. Crée d\'abord un produit dans l\'onglet "+ Nouveau produit".</div>';
+    return;
+  }
+  $('#orderCatalog').innerHTML = currentBrandProducts.map(p=>`
+    <div class="order-cat-card" data-id="${p.id}">
+      ${p.images && p.images[0] ? `<img class="order-cat-img" src="${p.images[0].url}" alt="">` : `<div class="order-cat-img"></div>`}
+      <div class="order-cat-name">${p.nom || '(sans nom)'}</div>
+      <div class="order-cat-meta">${productMetaLine(p)}</div>
+      <div class="order-cat-sizes">
+        ${TASK_SIZES.filter(s=>s).map(s=>`
+          <div class="order-cat-size-cell">
+            <label>${s}</label>
+            <input type="number" min="0" class="order-cat-size-input" data-size="${s}" placeholder="0">
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+$('#btnShowNewOrder').addEventListener('click', ()=>{ renderOrderCatalog(); showTasksView('newOrder'); });
+$('#btnBackFromOrder').addEventListener('click', ()=> showTasksView('default'));
+$('#btnCreateOrderFromCatalog').addEventListener('click', async ()=>{
+  const cards = $('#orderCatalog').querySelectorAll('.order-cat-card');
+  const toCreate = [];
+  cards.forEach(card=>{
+    const p = currentBrandProducts.find(x=>x.id===card.dataset.id);
+    if(!p) return;
+    card.querySelectorAll('.order-cat-size-input').forEach(input=>{
+      const qty = Number(input.value) || 0;
+      if(qty > 0) toCreate.push({ product:p, qty, taille: input.dataset.size });
+    });
+  });
+  if(!toCreate.length){ showToast('Renseigne au moins une quantité.'); return; }
+  const btn = $('#btnCreateOrderFromCatalog');
+  btn.disabled = true; btn.textContent = 'Création…';
+  for(const { product, qty, taille } of toCreate){
+    const task = {
+      id: 'task_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+      nom: product.nom, blank: product.blank, blankOther: product.blankOther || '',
+      taille: taille || '', couleur: product.couleurs || '', impression: product.impression || '',
+      quantity: qty, remarque: product.remarque || '',
+      mockup: (product.images||[]).slice(0,4),
+      done:false, readyQty:0, createdAt:new Date().toISOString()
+    };
+    currentTasks.push(task);
+    await saveTaskDoc(currentTasksBrandId, task);
+  }
+  await updateBrandSummary();
+  btn.disabled = false; btn.textContent = 'Créer la commande';
+  renderTasksTable();
+  showTasksView('default');
+  showToast(`${toCreate.length} produit(s) ajouté(s) à la commande`);
+});
+const TASK_SIZES = ['', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'OS'];
+const TASK_PRINT_METHODS = ['', 'Sérigraphie', 'Broderie', 'DTF (transfert numérique)', 'DTG', 'Flocage', 'Sublimation', 'Vinyle transfert', 'Autre'];
+$('#prodImpression').innerHTML = TASK_PRINT_METHODS.filter(m=>m).map(m=>`<option value="${m}">${m}</option>`).join('');
+$('#prodBlank').innerHTML = BLANK_OPTIONS.map(b=>`<option value="${b}">${b||'—'}</option>`).join('');
+
+function taskCardHTML(t){
+  const mockup = t.mockup || [];
+  return `
+    <div class="task-card ${t.done?'done':''} ${t.outOfStock?'out-of-stock':''}" data-id="${t.id}">
+      <div class="task-thumb-wrap">
+        <div class="task-thumb" data-open-gallery="${t.id}">
+          ${mockup[0] ? `<img src="${mockup[0].url}" alt="">` : '<span style="font-size:20px;">🖼</span>'}
+          ${mockup.length > 1 ? `<span class="task-thumb-count">+${mockup.length-1}</span>` : ''}
+        </div>
+        <button type="button" class="task-thumb-add" title="Ajouter une photo">+</button>
+      </div>
+      <div class="task-card-body">
+        <div class="task-title-row">
+          <input type="text" class="task-remarque" value="${(t.remarque||'').replace(/"/g,'&quot;')}" placeholder="Remarque…">
+          <input type="text" class="task-nom" value="${(t.nom||'').replace(/"/g,'&quot;')}" placeholder="Ex. T-shirt col rond">
+          <span class="task-date-badge">${formatDate(t.createdAt)}</span>
+        </div>
+        <div class="task-meta-row">
+          <select class="task-blank">${BLANK_OPTIONS.map(b=>`<option value="${b}" ${t.blank===b?'selected':''}>${b||'—'}</option>`).join('')}</select>
+          ${t.blank === 'Autre' ? `<input type="text" class="task-blank-other" value="${(t.blankOther||'').replace(/"/g,'&quot;')}" placeholder="Préciser">` : ''}
+          <select class="task-taille">${TASK_SIZES.map(s=>`<option value="${s}" ${t.taille===s?'selected':''}>${s||'—'}</option>`).join('')}</select>
+          <input type="text" class="task-couleur" value="${(t.couleur||'').replace(/"/g,'&quot;')}" placeholder="Couleur">
+          <select class="task-impression">${TASK_PRINT_METHODS.map(m=>`<option value="${m}" ${t.impression===m?'selected':''}>${m||'—'}</option>`).join('')}</select>
+        </div>
+        ${t.outOfStock ? '<div class="stock-badge">Rupture de stock, en attente de réassort</div>' : ''}
+        ${Number(t.quantity)>0 ? `
+        <div class="task-progress-row">
+          <div class="task-progress-track"><div class="task-progress-fill ${t.done?'full':''}" style="width:${Math.min(100, Math.round((Number(t.readyQty)||0)/Number(t.quantity)*100))}%"></div></div>
+          <span class="task-progress-label ${t.done?'full':''}">${Number(t.readyQty)||0} / ${t.quantity} prêtes</span>
+        </div>` : ''}
+      </div>
+      <div class="task-qty-block">
+        <input type="number" class="task-qty" min="0" value="${t.quantity||''}" placeholder="0">
+        <div class="qty-label">pièces</div>
+      </div>
+      <div class="task-actions-block">
+        <span class="badge-status ${t.done ? 'pay-paye' : (Number(t.readyQty)>0 ? 'pay-partiel' : '')}">${t.done ? 'Fait' : (Number(t.readyQty)>0 ? 'Partielle' : 'À faire')}</span>
+        <label><input type="checkbox" class="task-done" ${t.done?'checked':''}><span class="done-label">Fait</span></label>
+        <label class="task-ready-label">Prêtes
+          <input type="number" class="task-ready-qty" min="0" max="${t.quantity||0}" value="${t.readyQty||0}">
+        </label>
+        <label><input type="checkbox" class="task-outofstock" ${t.outOfStock?'checked':''}><span class="done-label stock-label">Rupture de stock, en attente</span></label>
+        <button type="button" class="del-row" title="Supprimer">×</button>
+      </div>
+    </div>`;
+}
+function wireTaskCard(card){
+  const id = card.dataset.id;
+  const task = currentTasks.find(t=>t.id===id);
+  if(!task) return;
+  card.querySelector('.task-ready-qty').addEventListener('change', async (e)=>{
+    const qty = Number(task.quantity) || 0;
+    let ready = Number(e.target.value) || 0;
+    if(ready < 0) ready = 0;
+    if(qty > 0 && ready > qty) ready = qty;
+    task.readyQty = ready;
+    task.closed = false;
+    task.done = qty > 0 && ready >= qty;
+    e.target.value = ready;
+    renderTasksTable();
+    await saveTaskDoc(currentTasksBrandId, task);
+    await updateBrandSummary();
+  });
+  card.querySelector('.task-done').addEventListener('change', async (e)=>{
+    task.closed = e.target.checked;
+    task.done = e.target.checked;
+    renderTasksTable();
+    await saveTaskDoc(currentTasksBrandId, task);
+    await updateBrandSummary();
+  });
+  card.querySelector('.task-outofstock').addEventListener('change', async (e)=>{
+    task.outOfStock = e.target.checked;
+    renderTasksTable();
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  card.querySelector('.task-nom').addEventListener('change', async (e)=>{
+    task.nom = e.target.value.trim();
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  card.querySelector('.task-blank').addEventListener('change', async (e)=>{
+    task.blank = e.target.value;
+    renderTasksTable();
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  const blankOtherInput = card.querySelector('.task-blank-other');
+  if(blankOtherInput) blankOtherInput.addEventListener('change', async (e)=>{
+    task.blankOther = e.target.value.trim();
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  card.querySelector('.task-taille').addEventListener('change', async (e)=>{
+    task.taille = e.target.value;
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  card.querySelector('.task-couleur').addEventListener('change', async (e)=>{
+    task.couleur = e.target.value.trim();
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  card.querySelector('.task-impression').addEventListener('change', async (e)=>{
+    task.impression = e.target.value;
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  card.querySelector('.task-qty').addEventListener('change', async (e)=>{
+    const qty = Math.max(0, Number(e.target.value) || 0);
+    task.quantity = qty;
+    let ready = Number(task.readyQty) || 0;
+    if(qty > 0 && ready > qty) ready = qty;
+    task.readyQty = ready;
+    task.done = !!task.closed || (qty > 0 && ready >= qty);
+    renderTasksTable();
+    await saveTaskDoc(currentTasksBrandId, task);
+    await updateBrandSummary();
+  });
+  card.querySelector('.task-remarque').addEventListener('change', async (e)=>{
+    task.remarque = e.target.value.trim();
+    await saveTaskDoc(currentTasksBrandId, task);
+  });
+  card.querySelector('.task-thumb').addEventListener('click', ()=> openMockupGallery(id));
+  card.querySelector('.task-thumb-add').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    activeMockupTaskId = id;
+    $('#taskMockupInput').click();
+  });
+  card.querySelector('.del-row').addEventListener('click', async ()=>{
+    currentTasks = currentTasks.filter(t=>t.id!==id);
+    renderTasksTable();
+    await deleteTaskDoc(currentTasksBrandId, id);
+    await updateBrandSummary();
+  });
+}
+function renderTasksTable(){
+  const pending = currentTasks.filter(t=>!t.done);
+  const done = currentTasks.filter(t=>t.done);
+
+  if(!pending.length){
+    $('#tasksTableBody').innerHTML = currentTasks.length
+      ? '<div class="order-empty">Toutes les commandes de cette marque sont faites 🎉</div>'
+      : '<div class="order-empty">Aucune commande pour l\'instant.</div>';
+  }else{
+    $('#tasksTableBody').innerHTML = pending.map(taskCardHTML).join('');
+  }
+  $('#tasksTableBody').querySelectorAll('.task-card').forEach(wireTaskCard);
+
+  const showDone = $('#showDoneTasks').checked;
+  if(!showDone || !done.length){
+    $('#tasksDoneGroups').innerHTML = '';
+  }else{
+    const groups = {};
+    done.forEach(t=>{
+      const d = t.createdAt ? new Date(t.createdAt) : null;
+      const key = d ? d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : 'Date inconnue';
+      if(!groups[key]) groups[key] = { items:[], sortKey: d ? d.getTime() : 0 };
+      groups[key].items.push(t);
+    });
+    const sortedKeys = Object.keys(groups).sort((a,b)=> groups[b].sortKey - groups[a].sortKey);
+    $('#tasksDoneGroups').innerHTML = `
+      <div class="done-groups-title">Commandes déjà faites (${done.length})</div>
+      ${sortedKeys.map(key=>`
+        <details class="done-group">
+          <summary>${key} <span class="done-group-count">${groups[key].items.length}</span></summary>
+          <div class="task-cards-list">${groups[key].items.map(taskCardHTML).join('')}</div>
+        </details>`).join('')}
+    `;
+    $('#tasksDoneGroups').querySelectorAll('.task-card').forEach(wireTaskCard);
+  }
+}
+
+/* ---------- Galerie des visuels du produit ---------- */
+let activeGalleryTaskId = null;
+function openMockupGallery(taskId){
+  const task = currentTasks.find(t=>t.id===taskId);
+  if(!task) return;
+  activeGalleryTaskId = taskId;
+  $('#mockupGalleryTaskName').textContent = task.nom || '(sans nom)';
+  renderMockupGallery();
+  $('#mockupGalleryOverlay').classList.add('open');
+}
+function renderMockupGallery(){
+  const task = currentTasks.find(t=>t.id===activeGalleryTaskId);
+  const imgs = task ? (task.mockup||[]) : [];
+  if(!imgs.length){
+    $('#mockupGalleryGrid').innerHTML = '<div class="product-empty">Aucune image pour ce produit.</div>';
+    return;
+  }
+  $('#mockupGalleryGrid').innerHTML = imgs.map((im,i)=>`
+    <div class="gallery-item">
+      <img src="${im.url}" alt="">
+      <button type="button" class="gallery-del" data-i="${i}">×</button>
+    </div>`).join('');
+  $('#mockupGalleryGrid').querySelectorAll('.gallery-del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      await removeMockupImage(activeGalleryTaskId, Number(btn.dataset.i));
+      renderMockupGallery();
+    });
+  });
+}
+$('#btnGalleryClose').addEventListener('click', ()=>{
+  $('#mockupGalleryOverlay').classList.remove('open');
+  activeGalleryTaskId = null;
+  renderTasksTable();
+});
+$('#btnGalleryAddPhoto').addEventListener('click', ()=>{
+  activeMockupTaskId = activeGalleryTaskId;
+  $('#taskMockupInput').click();
+});
+$('#btnGalleryDownloadAll').addEventListener('click', async ()=>{
+  const task = currentTasks.find(t=>t.id===activeGalleryTaskId);
+  if(task) await downloadTaskMockups(task);
+});
+async function recomputeAllBrandSummaries(){
+  const btn = $('#btnRecomputeBrands');
+  btn.disabled = true; btn.textContent = 'Recalcul…';
+  let fixed = 0;
+  for(const b of brands){
+    const tasks = await loadBrandTasks(b.id);
+    const total = tasks.length;
+    const done = tasks.filter(t=>t.done).length;
+    const pending = tasks.filter(t=>!t.done && t.createdAt);
+    const oldest = pending.length ? pending.reduce((m,t)=> t.createdAt < m ? t.createdAt : m, pending[0].createdAt) : null;
+    if(b.taskTotal !== total || b.taskDone !== done || (b.oldestPendingDate||null) !== oldest){
+      b.taskTotal = total; b.taskDone = done; b.oldestPendingDate = oldest;
+      await saveBrandDoc(b);
+      fixed++;
+    }
+  }
+  btn.disabled = false; btn.textContent = '↻ Recalculer';
+  renderBrands();
+  showToast(fixed ? `${fixed} marque(s) corrigée(s)` : 'Tous les compteurs étaient déjà à jour');
+}
+$('#btnRecomputeBrands').addEventListener('click', recomputeAllBrandSummaries);
+async function updateBrandSummary(){
+  const total = currentTasks.length;
+  const done = currentTasks.filter(t=>t.done).length;
+  const pending = currentTasks.filter(t=>!t.done && t.createdAt);
+  const oldestPendingDate = pending.length
+    ? pending.reduce((min,t)=> t.createdAt < min ? t.createdAt : min, pending[0].createdAt)
+    : null;
+  const idx = brands.findIndex(b=>b.id===currentTasksBrandId);
+  if(idx>=0){
+    const b = brands[idx];
+    const changed = b.taskTotal !== total || b.taskDone !== done || (b.oldestPendingDate||null) !== oldestPendingDate;
+    b.taskTotal = total;
+    b.taskDone = done;
+    b.oldestPendingDate = oldestPendingDate;
+    if(changed) await saveBrandDoc(b);
+  }
+}
+let activeMockupTaskId = null;
+async function uploadTaskMockupFile(brandId, taskId, file){
+  if(!storageRef) return null;
+  try{
+    const path = `brands/${brandId}/tasks/${taskId}/mockup_${Date.now()}_${Math.random().toString(36).slice(2,5)}`;
+    const ref = storageRef.child(path);
+    await withTimeout(ref.put(file), 60000);
+    const url = await withTimeout(ref.getDownloadURL(), 15000);
+    return { name: file.name, url, path };
+  }catch(e){
+    return null;
+  }
+}
+async function handleTaskMockupFile(taskId, file){
+  const task = currentTasks.find(t=>t.id===taskId);
+  if(!task) return;
+  if(!task.mockup) task.mockup = [];
+  if(task.mockup.length >= 4){ showToast('Maximum 4 images pour le mockup.'); return; }
+  const tempUrl = URL.createObjectURL(file);
+  const tempEntry = { name:file.name, url:tempUrl, uploading:true };
+  task.mockup.push(tempEntry);
+  renderTasksTable();
+  const uploaded = await uploadTaskMockupFile(currentTasksBrandId, taskId, file);
+  const idx = task.mockup.indexOf(tempEntry);
+  if(uploaded && idx > -1){
+    task.mockup[idx] = uploaded;
+    await saveTaskDoc(currentTasksBrandId, task);
+  }else if(idx > -1){
+    task.mockup.splice(idx,1);
+    showToast("Échec de l'envoi de l'image mockup.");
+  }
+  URL.revokeObjectURL(tempUrl);
+  renderTasksTable();
+  if(activeGalleryTaskId === taskId) renderMockupGallery();
+}
+async function removeMockupImage(taskId, index){
+  const task = currentTasks.find(t=>t.id===taskId);
+  if(!task || !task.mockup) return;
+  task.mockup.splice(index,1);
+  renderTasksTable();
+  await saveTaskDoc(currentTasksBrandId, task);
+}
+async function downloadTaskMockups(task){
+  const items = (task.mockup||[]).filter(im=>im && im.url && !im.uploading);
+  if(!items.length){ showToast('Aucun mockup à télécharger.'); return; }
+  const base = slugify(task.nom || 'mockup');
+  for(let i=0;i<items.length;i++){
+    await triggerDownload(items[i].url, `mockup-${base}-${i+1}${extOf(items[i].name)}`);
+    await delay(300);
+  }
+  showToast(`${items.length} mockup(s) téléchargé(s)`);
+}
+$('#taskMockupInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file || !activeMockupTaskId) return;
+  await handleTaskMockupFile(activeMockupTaskId, file);
+});
+
+$('#btnTasksClose').addEventListener('click', closeTasksModal);
+$('#tasksOverlay').addEventListener('click', (e)=>{ if(e.target.id==='tasksOverlay') closeTasksModal(); });
+
+$('#navCommandes').addEventListener('click', ()=>{
+  $('#navCommandes').classList.add('active'); $('#navMarques').classList.remove('active'); $('#navVectorizer').classList.remove('active');
+  $('#commandesSection').style.display='block'; $('#marquesSection').style.display='none'; $('#vectorizerSection').style.display='none';
+});
+$('#navMarques').addEventListener('click', async ()=>{
+  $('#navMarques').classList.add('active'); $('#navCommandes').classList.remove('active'); $('#navVectorizer').classList.remove('active');
+  $('#commandesSection').style.display='none'; $('#marquesSection').style.display='block'; $('#vectorizerSection').style.display='none';
+  if(!brandsLoaded){ brandsLoaded = true; await loadBrands(); }
+});
+$('#navVectorizer').addEventListener('click', ()=>{
+  $('#navVectorizer').classList.add('active'); $('#navCommandes').classList.remove('active'); $('#navMarques').classList.remove('active');
+  $('#commandesSection').style.display='none'; $('#marquesSection').style.display='none'; $('#vectorizerSection').style.display='block';
+});
+
+/* ---------- Vectorizer ---------- */
+let vecImageDataUrl = null;
+let vecResultSvg = null;
+let vecDebounceTimer = null;
+
+function loadVecFile(file){
+  if(!file || !file.type.startsWith('image/')){ showToast('Choisis un fichier image.'); return; }
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    vecImageDataUrl = e.target.result;
+    vecResultSvg = null;
+    $('#vecCompareOriginal').src = vecImageDataUrl;
+    $('#vecIntro').style.display = 'none';
+    $('#vecWorkspace').style.display = 'block';
+    $('#vecSlider').value = 50;
+    updateVecSlider(50);
+    runVectorize();
+  };
+  reader.readAsDataURL(file);
+}
+$('#vecDrop').addEventListener('click', ()=> $('#vecFileInput').click());
+$('#vecFileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) loadVecFile(file);
+  e.target.value = '';
+});
+$('#vecDrop').addEventListener('dragover', (e)=>{ e.preventDefault(); $('#vecDrop').classList.add('dragover'); });
+$('#vecDrop').addEventListener('dragleave', ()=> $('#vecDrop').classList.remove('dragover'));
+$('#vecDrop').addEventListener('drop', (e)=>{
+  e.preventDefault();
+  $('#vecDrop').classList.remove('dragover');
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(file) loadVecFile(file);
+});
+
+function buildGrayscalePalette(n){
+  const pal = [];
+  for(let i=0;i<n;i++){
+    const v = Math.round(i * 255 / Math.max(1, n-1));
+    pal.push({r:v,g:v,b:v,a:255});
+  }
+  return pal;
+}
+function getVecOptions(){
+  const smooth = Number($('#vecSmooth').value) || 0;
+  const colors = Number($('#vecColors').value) || 12;
+  const opts = {
+    numberofcolors: colors,
+    colorquantcycles: 3,
+    ltres: 1 + smooth * 1.4,
+    qtres: 1 + smooth * 1.4,
+    pathomit: 4 + smooth * 3,
+    blurradius: Math.round(smooth * 0.6),
+    blurdelta: 24,
+    rightangleenhance: smooth < 4,
+    roundcoords: 1,
+    strokewidth: 0,
+    scale: 1
+  };
+  if($('#vecGrayscale').checked){
+    opts.pal = buildGrayscalePalette(colors);
+  }
+  return opts;
+}
+let imageTracerPromise = null;
+function loadImageTracer(){
+  if(window.ImageTracer) return Promise.resolve();
+  if(!imageTracerPromise){
+    imageTracerPromise = new Promise((resolve, reject)=>{
+      const sc = document.createElement('script');
+      sc.src = 'https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js';
+      sc.onload = resolve;
+      sc.onerror = ()=>{ imageTracerPromise = null; reject(new Error('chargement du vectoriseur impossible')); };
+      document.head.appendChild(sc);
+    });
+  }
+  return imageTracerPromise;
+}
+async function runVectorize(){
+  if(!vecImageDataUrl) return;
+  $('#vecStatus').textContent = 'Vectorisation…';
+  try{ await loadImageTracer(); }
+  catch(err){ $('#vecStatus').textContent = 'Erreur'; showToast('Erreur : ' + err.message); return; }
+  setTimeout(()=>{
+    try{
+      ImageTracer.imageToSVG(vecImageDataUrl, (svgstr)=>{
+        vecResultSvg = svgstr;
+        $('#vecResultContainer').innerHTML = svgstr;
+        $('#vecStatus').textContent = 'Terminé';
+      }, getVecOptions());
+    }catch(err){
+      $('#vecStatus').textContent = 'Erreur';
+      showToast('Erreur pendant la vectorisation (' + (err && err.message ? err.message : 'inconnue') + ')');
+    }
+  }, 30);
+}
+$('#vecSmooth').addEventListener('input', (e)=>{
+  $('#vecSmoothVal').textContent = e.target.value;
+  clearTimeout(vecDebounceTimer);
+  vecDebounceTimer = setTimeout(runVectorize, 350);
+});
+$('#vecColors').addEventListener('input', (e)=>{
+  $('#vecColorsVal').textContent = e.target.value;
+  clearTimeout(vecDebounceTimer);
+  vecDebounceTimer = setTimeout(runVectorize, 350);
+});
+$('#vecGrayscale').addEventListener('change', runVectorize);
+
+function updateVecSlider(val){
+  $('#vecCompareAfter').style.clipPath = `inset(0 ${100 - val}% 0 0)`;
+  $('#vecSliderLine').style.left = val + '%';
+  $('#vecSliderHandle').style.left = val + '%';
+}
+$('#vecSlider').addEventListener('input', (e)=> updateVecSlider(e.target.value));
+
+$('#btnVecNewImage').addEventListener('click', ()=>{
+  vecImageDataUrl = null; vecResultSvg = null;
+  $('#vecResultContainer').innerHTML = '';
+  $('#vecWorkspace').style.display = 'none';
+  $('#vecIntro').style.display = 'block';
+});
+
+$('#btnDownloadSvg').addEventListener('click', ()=>{
+  if(!vecResultSvg){ showToast('Aucun SVG à télécharger.'); return; }
+  const blob = new Blob([vecResultSvg], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vectorise.svg';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* ---------- Authentification ---------- */
+const ADMIN_EMAIL = "printtex75@gmail.com";
+function isAllowedEmail(email){
+  return ADMIN_EMAIL === "TON_EMAIL_ICI" || (email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+}
+function showApp(){
+  document.body.classList.remove('role-brand');
+  $('#brandPortalHeader').style.display = 'none';
+  $('#authGate').style.display = 'none';
+  $('#appRoot').style.display = 'block';
+  $('#notepadTab').style.display = 'block';
+  loadAdminNote();
+}
+function showAuthGate(){
+  document.body.classList.remove('role-brand');
+  $('#brandPortalHeader').style.display = 'none';
+  $('#appRoot').style.display = 'none';
+  $('#authGate').style.display = 'flex';
+  $('#authSignupBlock').style.display = 'none';
+  $('#authLoginBlock').style.display = 'block';
+  $('#notepadTab').style.display = 'none';
+  $('#notepadPanel').style.display = 'none';
+  orders = []; brands = []; brandsLoaded = false;
+}
+async function findBrandByOwner(uid){
+  if(!db) return { brand:null, error:'Firebase non configuré' };
+  try{
+    const snap = await withTimeout(db.collection('brands').where('ownerUid','==',uid).get(), 10000);
+    return { brand: snap.docs.length ? snap.docs[0].data() : null, error:null };
+  }catch(e){ return { brand:null, error: e && e.message ? e.message : 'inconnue' }; }
+}
+async function showBrandPortal(brand){
+  document.body.classList.add('role-brand');
+  $('#authGate').style.display = 'none';
+  $('#appRoot').style.display = 'none';
+  $('#notepadTab').style.display = 'none';
+  $('#notepadPanel').style.display = 'none';
+  $('#brandPortalHeader').style.display = 'flex';
+  $('#brandPortalName').textContent = brand.name;
+  brands = [brand];
+  await openTasksModal(brand.id);
+}
+
+/* ---------- Bloc-notes admin "À commander" ---------- */
+let notepadSaveTimer = null;
+async function loadAdminNote(){
+  if(!db) return;
+  try{
+    const doc = await withTimeout(db.collection('adminNotes').doc('toOrder').get(), 8000);
+    $('#notepadText').value = (doc.exists && doc.data().text) ? doc.data().text : '';
+  }catch(e){}
+}
+async function saveAdminNote(){
+  if(!db) return;
+  $('#notepadStatus').textContent = 'Enregistrement…';
+  try{
+    await withTimeout(db.collection('adminNotes').doc('toOrder').set({ text: $('#notepadText').value, updatedAt: new Date().toISOString() }), 8000);
+    $('#notepadStatus').textContent = 'Enregistré';
+    setTimeout(()=>{ if($('#notepadStatus').textContent === 'Enregistré') $('#notepadStatus').textContent=''; }, 1500);
+  }catch(e){
+    $('#notepadStatus').textContent = "Échec de l'enregistrement";
+  }
+}
+$('#notepadTab').addEventListener('click', ()=>{
+  $('#notepadPanel').style.display = 'flex';
+  $('#notepadText').focus();
+});
+$('#btnNotepadClose').addEventListener('click', ()=>{
+  $('#notepadPanel').style.display = 'none';
+});
+$('#notepadText').addEventListener('input', ()=>{
+  clearTimeout(notepadSaveTimer);
+  $('#notepadStatus').textContent = '';
+  notepadSaveTimer = setTimeout(saveAdminNote, 800);
+});
+async function ensureAuthPersistence(){
+  try{ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }
+  catch(e){ try{ await auth.setPersistence(firebase.auth.Auth.Persistence.NONE); }catch(_){} }
+}
+function authErrMsg(e, ctx){
+  if(e && (e.code==='auth/web-storage-unsupported' || e.code==='auth/internal-error' || e.code==='auth/app-not-authorized')) return 'Navigateur non compatible (' + e.code + '). Ouvrez le site dans Safari ou Chrome (pas dans Instagram/Facebook/Gmail).';
+  const c = (e && e.code) || '';
+  if(c==='auth/invalid-email') return 'Email invalide.';
+  if(c==='auth/user-disabled') return 'Ce compte est désactivé. Contactez Printtex.';
+  if(c==='auth/user-not-found') return ctx==='reset' ? 'Aucun compte avec cet email.' : 'Email ou mot de passe incorrect.';
+  if(c==='auth/wrong-password' || c==='auth/invalid-credential' || c==='auth/invalid-login-credentials') return 'Email ou mot de passe incorrect. Essayez « Mot de passe oublié ? ».';
+  if(c==='auth/too-many-requests') return 'Trop de tentatives. Patientez une trentaine de minutes puis réessayez.';
+  if(c==='auth/network-request-failed') return 'Problème de connexion internet. Réessayez.';
+  if(c==='auth/unauthorized-domain' || c==='auth/unauthorized-continue-uri') return 'Domaine non autorisé dans Firebase (' + location.hostname + ').';
+  if(c==='auth/operation-not-allowed') return "Méthode de connexion désactivée dans Firebase.";
+  return (ctx==='reset' ? "Impossible d'envoyer l'email" : 'Connexion impossible') + (c ? ' (' + c + ').' : '.');
+}
+async function doLogin(){
+  const email = $('#authEmail').value.trim().toLowerCase();
+  const pass = $('#authPassword').value;
+  $('#authError').textContent = '';
+  if(!email || !pass){ $('#authError').textContent = 'Email et mot de passe requis.'; return; }
+  const btn = $('#btnLogin');
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  try{
+    await ensureAuthPersistence();
+    await auth.signInWithEmailAndPassword(email, pass);
+    $('#authPassword').value = '';
+  }catch(e){
+    console.error('login', e); $('#authError').textContent = authErrMsg(e,'login');
+    if(e && /invalid-credential|wrong-password|invalid-login|user-not-found/.test(e.code||'')){
+      const l = $('#linkForgotPassword'); if(l){ l.style.cssText = 'display:inline-block;padding:8px 14px;border-radius:8px;background:var(--ink);color:var(--paper,#fff);text-decoration:none;'; }
+    }
+  }finally{
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+async function doForgotPassword(){
+  $('#authError').textContent = '';
+  const email = $('#authEmail').value.trim();
+  if(!email){
+    $('#authError').textContent = "Renseigne ton email dans le champ ci-dessus, puis clique à nouveau sur « Mot de passe oublié ? ».";
+    $('#authEmail').focus();
+    return;
+  }
+  const link = $('#linkForgotPassword');
+  const originalText = link.textContent;
+  link.textContent = 'Envoi…';
+  try{
+    try{
+      await auth.sendPasswordResetEmail(email, { url: location.origin + location.pathname, handleCodeInApp: false });
+    }catch(e1){
+      if(e1 && (e1.code==='auth/unauthorized-continue-uri' || e1.code==='auth/invalid-continue-uri' || e1.code==='auth/missing-continue-uri')) await auth.sendPasswordResetEmail(email);
+      else throw e1;
+    }
+    showToast('Email de réinitialisation envoyé à ' + email);
+  }catch(e){
+    console.error('reset', e);
+    const msg = authErrMsg(e,'reset');
+    $('#authError').textContent = msg;
+  }finally{
+    link.textContent = originalText;
+  }
+}
+$('#linkForgotPassword').addEventListener('click', (e)=>{
+  e.preventDefault();
+  doForgotPassword();
+});
+async function doGoogleLogin(){
+  const btn = $('#btnGoogleLogin');
+  $('#authError').textContent = '';
+  btn.disabled = true;
+  try{
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  }catch(e){
+    console.error('google', e); $('#authError').textContent = (e && e.code==='auth/popup-closed-by-user') ? '' : authErrMsg(e,'google');
+  }finally{
+    btn.disabled = false;
+  }
+}
+let skipNextAuthRoute = false;
+async function doSignup(){
+  const email = $('#signupEmail').value.trim();
+  const pass = $('#signupPassword').value;
+  const brandName = $('#signupBrandName').value.trim();
+  $('#signupError').textContent = '';
+  if(!email || !pass || !brandName){ $('#signupError').textContent = 'Tous les champs sont obligatoires.'; return; }
+  if(pass.length < 6){ $('#signupError').textContent = 'Mot de passe : 6 caractères minimum.'; return; }
+  const btn = $('#btnSignup');
+  btn.disabled = true; btn.textContent = 'Création…';
+  skipNextAuthRoute = true;
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    const brandId = 'brand_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    const brand = {
+      id: brandId, name: brandName, contact: '', notes: '',
+      ownerUid: cred.user.uid, ownerEmail: email, taskTotal: 0, taskDone: 0,
+      createdAt: new Date().toISOString()
+    };
+    await db.collection('brands').doc(brandId).set(brand);
+    skipNextAuthRoute = false;
+    await showBrandPortal(brand);
+  }catch(e){
+    let msg = "Erreur lors de l'inscription.";
+    if(e.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
+    else if(e.code === 'auth/weak-password') msg = 'Mot de passe trop faible.';
+    else if(e.code === 'auth/invalid-email') msg = 'Email invalide.';
+    $('#signupError').textContent = msg;
+    skipNextAuthRoute = false;
+  }finally{
+    btn.disabled = false; btn.textContent = 'Créer mon compte';
+  }
+}
+$('#btnLogin').addEventListener('click', doLogin);
+$('#btnGoogleLogin').addEventListener('click', doGoogleLogin);
+$('#btnSignup').addEventListener('click', doSignup);
+$('#authForm').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); doLogin(); }
+});
+$('#signupForm').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); doSignup(); }
+});
+$('#linkShowSignup').addEventListener('click', (e)=>{
+  e.preventDefault();
+  $('#authLoginBlock').style.display = 'none';
+  $('#authSignupBlock').style.display = 'block';
+});
+$('#linkShowLogin').addEventListener('click', (e)=>{
+  e.preventDefault();
+  $('#authSignupBlock').style.display = 'none';
+  $('#authLoginBlock').style.display = 'block';
+});
+$('#btnLogout').addEventListener('click', async ()=>{
+  if(auth) await auth.signOut();
+});
+$('#btnPortalLogout').addEventListener('click', async ()=>{
+  if(auth) await auth.signOut();
+});
+
+if(auth){
+  auth.onAuthStateChanged(async (user)=>{
+    if(skipNextAuthRoute) return;
+    if(!user){
+      showAuthGate();
+      return;
+    }
+    if(isAllowedEmail(user.email)){
+      showApp();
+      loadOrders();
+    }else{
+      const { brand, error } = await findBrandByOwner(user.uid);
+      if(error){
+        showToast("Erreur de connexion : " + error);
+        console.error('Erreur findBrandByOwner:', error);
+        await auth.signOut();
+        return;
+      }
+      if(!brand){
+        showToast("Aucune marque associée à ce compte.");
+        await auth.signOut();
+        return;
+      }
+      showBrandPortal(brand);
+    }
+  });
+}else{
+  showApp();
+  loadOrders();
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
