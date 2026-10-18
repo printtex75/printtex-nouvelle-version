@@ -8,6 +8,11 @@ compatibility_date = "2026-10-01"
 ALLOWED_ORIGINS = "https://printtex75.github.io,http://localhost:8080"
 FIREBASE_PROJECT = "printtex-commande"
 BRANDS_COLLECTION = "beta_brands"
+ADMIN_COLLECTION = "beta_adminNotes"
+MAIL_FROM_NAME = "Printtex"
+MAIL_FROM = "printtex75@gmail.com"
+MAIL_REPLY_TO = "printtex75@gmail.com"
+# Clé Brevo : secret, à poser par Karim avec « npx.cmd wrangler@4 secret put BREVO_API_KEY » (jamais dans ce fichier)
 
 [[kv_namespaces]]
 binding = "SHOPS"

@@ -32,6 +32,25 @@ async function checkBrandAccess(env, req, brandId){
   return 'Accès refusé à cette marque';
 }
 
+// Admin Printtex : seul l'admin peut lire adminNotes (règles Firestore). 200 = document lu, 404 = absent mais lecture autorisée.
+async function checkAdmin(env, req){
+  const auth = req.headers.get('Authorization') || '';
+  if(!auth.startsWith('Bearer ')) return false;
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/${env.ADMIN_COLLECTION}/toOrder`, { headers: { Authorization: auth } });
+  return r.status === 200 || r.status === 404;
+}
+// Email de la marque, lu dans sa fiche Firestore (jamais fourni par le navigateur).
+async function brandEmail(env, req, brandId){
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/${env.BRANDS_COLLECTION}/${brandId}`, { headers: { Authorization: req.headers.get('Authorization') } });
+  if(!r.ok) return { error:'Marque introuvable' };
+  const f = (await r.json()).fields || {};
+  const owner = f.ownerEmail && f.ownerEmail.stringValue;
+  const contact = f.contact && f.contact.stringValue;
+  const email = owner || (String(contact || '').match(/[^\s<>]+@[^\s<>]+\.[a-z]{2,}/i) || [])[0] || '';
+  const name = (f.name && f.name.stringValue) || '';
+  return email ? { email, name } : { error:'Aucun email pour cette marque' };
+}
+
 async function shopify(conf, path){
   const r = await fetch(`https://${conf.shop}/admin/api/${API_VERSION}/${path}`, { headers: { 'X-Shopify-Access-Token': conf.token, 'Accept':'application/json' } });
   if(!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Jeton Shopify refusé (vérifiez les autorisations read_orders et read_products)' : 'Shopify a répondu ' + r.status);
@@ -78,6 +97,34 @@ export default {
         const info = await shopify({ shop, token }, 'shop.json');
         await env.SHOPS.put('brand:' + body.brandId, JSON.stringify({ shop, token, connectedAt: new Date().toISOString() }));
         return json(env, req, { ok:true, shop, shopName: info.shop && info.shop.name });
+      }
+      // Mails aux marques (rupture, commande du textile, suivi, réception, commande prête), envoyés par Brevo.
+      if(url.pathname === '/mail/status' && req.method === 'GET'){
+        if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
+        return json(env, req, { configured: !!env.BREVO_API_KEY, from: env.MAIL_FROM || '' });
+      }
+      if(url.pathname === '/mail' && req.method === 'POST'){
+        if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
+        if(!env.BREVO_API_KEY) return json(env, req, { error:'Brevo n\'est pas encore configuré' }, 503);
+        const body = await req.json();
+        const subject = String(body.subject || '').slice(0, 200);
+        const text = String(body.text || '').slice(0, 5000);
+        if(!subject || !text) return json(env, req, { error:'Mail vide' }, 400);
+        const to = await brandEmail(env, req, body.brandId);
+        if(to.error) return json(env, req, { error: to.error }, 400);
+        const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method:'POST',
+          headers:{ 'api-key': env.BREVO_API_KEY, 'Content-Type':'application/json', 'Accept':'application/json' },
+          body: JSON.stringify({
+            sender:{ name: env.MAIL_FROM_NAME || 'Printtex', email: env.MAIL_FROM },
+            to:[{ email: to.email, name: to.name || undefined }],
+            replyTo:{ email: env.MAIL_REPLY_TO || env.MAIL_FROM },
+            subject, textContent: text
+          })
+        });
+        const data = await r.json().catch(()=>({}));
+        if(!r.ok) return json(env, req, { error: 'Brevo : ' + (data.message || r.status) }, 502);
+        return json(env, req, { ok:true, to: to.email, messageId: data.messageId || '' });
       }
       const brandId = url.searchParams.get('brandId');
       if(url.pathname === '/disconnect' && req.method === 'POST'){
