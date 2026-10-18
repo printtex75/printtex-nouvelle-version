@@ -1,0 +1,14 @@
+# Liaison Shopify des marques — version de test (données beta_)
+# Redéployer : npx.cmd wrangler@4 deploy (dans ce dossier)
+name = "printtex-shopify-test"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://printtex75.github.io,http://localhost:8080"
+FIREBASE_PROJECT = "printtex-commande"
+BRANDS_COLLECTION = "beta_brands"
+
+[[kv_namespaces]]
+binding = "SHOPS"
+id = "4604682db9314d7b9a51e56831709feb"
