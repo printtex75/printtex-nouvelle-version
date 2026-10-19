@@ -129,6 +129,7 @@ export default {
         await env.SHOPS.put('brand:' + body.brandId, JSON.stringify({ shop, token, connectedAt: new Date().toISOString() }));
         return json(env, req, { ok:true, shop, shopName: info.shop && info.shop.name });
       }
+      const routineOk = () => env.ROUTINE_KEY && req.headers.get('X-Printtex-Key') === env.ROUTINE_KEY;
       // Boutiques en ligne reliées sans application : produits lus publiquement (Shopify, Big Cartel),
       // commandes reçues en copie par mail (printtex75+commandes@gmail.com) et lues par la tâche quotidienne.
       if(url.pathname === '/store/products' && req.method === 'GET'){
@@ -192,7 +193,6 @@ export default {
       }
       // Ruptures et réassort : l'outil publie les lignes en rupture ; la tâche quotidienne (Claude, Gmail) renvoie
       // les dates de commande et numéros de suivi trouvés dans les mails fournisseurs ; l'outil les applique.
-      const routineOk = () => env.ROUTINE_KEY && req.headers.get('X-Printtex-Key') === env.ROUTINE_KEY;
       if(url.pathname === '/ruptures' && req.method === 'POST'){
         if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
         const body = await req.json();
