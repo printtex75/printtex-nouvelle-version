@@ -51,6 +51,19 @@ async function brandEmail(env, req, brandId){
   return email ? { email, name } : { error:'Aucun email pour cette marque' };
 }
 
+// Produits publics d'une boutique : Shopify (/products.json) ou Big Cartel (api.bigcartel.com/<boutique>/products.json).
+async function storeProducts(raw){
+  const host = String(raw).trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'');
+  if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) return { error:'Adresse de boutique invalide (ex. maboutique.com)' };
+  const get = async u => { try{ const r = await fetch(u, { headers:{ 'Accept':'application/json', 'User-Agent':'Printtex/1.0' } }); return r.ok ? await r.json() : null; }catch(e){ return null; } };
+  const sp = await get(`https://${host}/products.json?limit=250`);
+  if(sp && Array.isArray(sp.products)) return { platform:'shopify', storeUrl: host, products: sp.products.map(p=>({ id:String(p.id), title:p.title, image: ((p.images||[])[0]||{}).src || '' })) };
+  const sub = host.endsWith('.bigcartel.com') ? host.split('.')[0] : host.split('.')[0];
+  const bc = await get(`https://api.bigcartel.com/${sub}/products.json`);
+  if(Array.isArray(bc)) return { platform:'bigcartel', storeUrl: host, products: bc.map(p=>({ id:String(p.id), title:p.name, image: ((p.images||[])[0]||{}).secure_url || ((p.images||[])[0]||{}).url || '' })) };
+  return { error:'Boutique introuvable : vérifiez l\'adresse (Shopify ou Big Cartel).' };
+}
+
 async function shopify(conf, path){
   const r = await fetch(`https://${conf.shop}/admin/api/${API_VERSION}/${path}`, { headers: { 'X-Shopify-Access-Token': conf.token, 'Accept':'application/json' } });
   if(!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'Jeton Shopify refusé (vérifiez les autorisations read_orders et read_products)' : 'Shopify a répondu ' + r.status);
@@ -115,6 +128,67 @@ export default {
         const info = await shopify({ shop, token }, 'shop.json');
         await env.SHOPS.put('brand:' + body.brandId, JSON.stringify({ shop, token, connectedAt: new Date().toISOString() }));
         return json(env, req, { ok:true, shop, shopName: info.shop && info.shop.name });
+      }
+      // Boutiques en ligne reliées sans application : produits lus publiquement (Shopify, Big Cartel),
+      // commandes reçues en copie par mail (printtex75+commandes@gmail.com) et lues par la tâche quotidienne.
+      if(url.pathname === '/store/products' && req.method === 'GET'){
+        const bid = url.searchParams.get('brandId');
+        const denied = await checkBrandAccess(env, req, bid);
+        if(denied) return json(env, req, { error: denied }, 403);
+        const found = await storeProducts(url.searchParams.get('url') || '');
+        if(found.error) return json(env, req, found, 400);
+        return json(env, req, found);
+      }
+      if(url.pathname === '/stores' && req.method === 'POST'){
+        const body = await req.json();
+        const denied = await checkBrandAccess(env, req, body.brandId);
+        if(denied) return json(env, req, { error: denied }, 403);
+        if(body.remove){ await env.SHOPS.delete('store:' + body.brandId); return json(env, req, { ok:true }); }
+        const entry = { brandId: body.brandId, marque: String(body.marque || '').slice(0,80), storeUrl: String(body.storeUrl || '').slice(0,200),
+          platform: String(body.platform || '').slice(0,20), produits: (Array.isArray(body.produits) ? body.produits : []).slice(0,300).map(p=>({ titre: String(p.titre||'').slice(0,200), printtexId: String(p.printtexId||'').slice(0,80), printtexNom: String(p.printtexNom||'').slice(0,200) })), updatedAt: new Date().toISOString() };
+        await env.SHOPS.put('store:' + body.brandId, JSON.stringify(entry));
+        return json(env, req, { ok:true });
+      }
+      if(url.pathname === '/routine/stores' && req.method === 'GET'){
+        if(!routineOk()) return json(env, req, { error:'Clé invalide' }, 403);
+        const list = await env.SHOPS.list({ prefix:'store:' });
+        const stores = [];
+        for(const k of list.keys){ const v = JSON.parse(await env.SHOPS.get(k.name) || 'null'); if(v) stores.push(v); }
+        return json(env, req, { stores, lastRun: await env.SHOPS.get('routine:lastStoreRun') || '' });
+      }
+      if(url.pathname === '/routine/orders' && req.method === 'POST'){
+        if(!routineOk()) return json(env, req, { error:'Clé invalide' }, 403);
+        const body = await req.json();
+        let added = 0;
+        for(const o of (Array.isArray(body.orders) ? body.orders : []).slice(0, 200)){
+          if(!o || !o.brandId || !o.ref || !Array.isArray(o.lines) || !o.lines.length) continue;
+          const key = 'storeorders:' + o.brandId;
+          const pending = JSON.parse(await env.SHOPS.get(key) || '[]');
+          const ref = String(o.ref).slice(0,60);
+          if(pending.some(p=>p.ref === ref)) continue;
+          pending.push({ ref, date: String(o.date || '').slice(0,30), source: String(o.source || '').slice(0,100),
+            lines: o.lines.slice(0,50).map(l=>({ title: String(l.title||'').slice(0,200), variant: String(l.variant||'').slice(0,120), quantity: Math.max(0, Math.min(10000, Number(l.quantity)||0)), options: String(l.options||'').slice(0,300) })) });
+          await env.SHOPS.put(key, JSON.stringify(pending.slice(-300)));
+          added++;
+        }
+        if(body.lastRun) await env.SHOPS.put('routine:lastStoreRun', String(body.lastRun));
+        return json(env, req, { ok:true, added });
+      }
+      if(url.pathname === '/storeorders' && req.method === 'GET'){
+        const bid = url.searchParams.get('brandId');
+        const denied = await checkBrandAccess(env, req, bid);
+        if(denied) return json(env, req, { error: denied }, 403);
+        return json(env, req, { orders: JSON.parse(await env.SHOPS.get('storeorders:' + bid) || '[]') });
+      }
+      if(url.pathname === '/storeorders/ack' && req.method === 'POST'){
+        const body = await req.json();
+        const denied = await checkBrandAccess(env, req, body.brandId);
+        if(denied) return json(env, req, { error: denied }, 403);
+        const refs = new Set(Array.isArray(body.refs) ? body.refs : []);
+        const key = 'storeorders:' + body.brandId;
+        const pending = JSON.parse(await env.SHOPS.get(key) || '[]').filter(p=> !refs.has(p.ref));
+        await env.SHOPS.put(key, JSON.stringify(pending));
+        return json(env, req, { ok:true, left: pending.length });
       }
       // Ruptures et réassort : l'outil publie les lignes en rupture ; la tâche quotidienne (Claude, Gmail) renvoie
       // les dates de commande et numéros de suivi trouvés dans les mails fournisseurs ; l'outil les applique.
