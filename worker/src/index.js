@@ -77,7 +77,25 @@ function demoOrders(){
   ];
 }
 
+// Récapitulatif quotidien : un mail par marque avec les lignes passées « prêtes » dans la journée.
+async function sendDigests(env){
+  if(!env.BREVO_API_KEY) return;
+  const list = await env.SHOPS.list({ prefix: 'digest:' });
+  for(const k of list.keys){
+    const d = JSON.parse(await env.SHOPS.get(k.name) || 'null');
+    if(!d || !d.email || !d.items || !d.items.length){ await env.SHOPS.delete(k.name); continue; }
+    const text = [`Bonjour ${d.name || ''},`, '', 'Ces commandes sont prêtes chez Printtex :', ...d.items.map(i=> '- ' + i), '',
+      'Vous pouvez suivre l\'avancement dans votre espace Printtex.', '', 'Printtex', '(Message envoyé automatiquement : vous pouvez y répondre.)'].join('\n');
+    const r = await fetch('https://api.brevo.com/v3/smtp/email', { method:'POST',
+      headers:{ 'api-key': env.BREVO_API_KEY, 'Content-Type':'application/json', 'Accept':'application/json' },
+      body: JSON.stringify({ sender:{ name: env.MAIL_FROM_NAME || 'Printtex', email: env.MAIL_FROM }, to:[{ email: d.email }],
+        replyTo:{ email: env.MAIL_REPLY_TO || env.MAIL_FROM }, subject: `Vos commandes prêtes (${d.items.length})`, textContent: text }) });
+    if(r.ok) await env.SHOPS.delete(k.name);
+  }
+}
+
 export default {
+  async scheduled(event, env, ctx){ ctx.waitUntil(sendDigests(env)); },
   async fetch(req, env){
     if(req.method === 'OPTIONS') return new Response(null, { headers: cors(env, req) });
     const url = new URL(req.url);
@@ -148,6 +166,20 @@ export default {
       if(url.pathname === '/mail/status' && req.method === 'GET'){
         if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
         return json(env, req, { configured: !!env.BREVO_API_KEY, from: env.MAIL_FROM || '' });
+      }
+      if(url.pathname === '/digest' && req.method === 'POST'){
+        if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
+        const body = await req.json();
+        const line = String(body.line || '').slice(0, 300);
+        if(!line) return json(env, req, { error:'Ligne vide' }, 400);
+        const to = await brandEmail(env, req, body.brandId);
+        if(to.error) return json(env, req, { error: to.error }, 400);
+        const key = 'digest:' + body.brandId;
+        const cur = JSON.parse(await env.SHOPS.get(key) || 'null') || { email: to.email, name: to.name, items: [] };
+        cur.email = to.email; cur.name = to.name;
+        cur.items.push(line);
+        await env.SHOPS.put(key, JSON.stringify(cur));
+        return json(env, req, { ok:true, waiting: cur.items.length });
       }
       if(url.pathname === '/mail' && req.method === 'POST'){
         if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);

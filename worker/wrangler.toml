@@ -17,3 +17,7 @@ MAIL_REPLY_TO = "printtex75@gmail.com"
 [[kv_namespaces]]
 binding = "SHOPS"
 id = "4604682db9314d7b9a51e56831709feb"
+
+# Récapitulatif « commandes prêtes » : 15 h UTC = 16 h à Paris en hiver (17 h en été)
+[triggers]
+crons = ["0 15 * * *"]
