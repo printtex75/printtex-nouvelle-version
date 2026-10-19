@@ -13,7 +13,7 @@ function cors(env, req){
   return {
     'Access-Control-Allow-Origin': allowed.includes(origin) ? origin : allowed[0] || '',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Printtex-Key',
     'Vary': 'Origin'
   };
 }
@@ -97,6 +97,52 @@ export default {
         const info = await shopify({ shop, token }, 'shop.json');
         await env.SHOPS.put('brand:' + body.brandId, JSON.stringify({ shop, token, connectedAt: new Date().toISOString() }));
         return json(env, req, { ok:true, shop, shopName: info.shop && info.shop.name });
+      }
+      // Ruptures et réassort : l'outil publie les lignes en rupture ; la tâche quotidienne (Claude, Gmail) renvoie
+      // les dates de commande et numéros de suivi trouvés dans les mails fournisseurs ; l'outil les applique.
+      const routineOk = () => env.ROUTINE_KEY && req.headers.get('X-Printtex-Key') === env.ROUTINE_KEY;
+      if(url.pathname === '/ruptures' && req.method === 'POST'){
+        if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
+        const body = await req.json();
+        const list = Array.isArray(body.ruptures) ? body.ruptures.slice(0, 500) : [];
+        await env.SHOPS.put('ruptures', JSON.stringify({ updatedAt: new Date().toISOString(), ruptures: list }));
+        return json(env, req, { ok:true, count: list.length });
+      }
+      if(url.pathname === '/routine/ruptures' && req.method === 'GET'){
+        if(!routineOk()) return json(env, req, { error:'Clé invalide' }, 403);
+        const r = JSON.parse(await env.SHOPS.get('ruptures') || '{"ruptures":[]}');
+        r.lastRun = await env.SHOPS.get('routine:lastRun') || '';
+        return json(env, req, r);
+      }
+      if(url.pathname === '/routine/updates' && req.method === 'POST'){
+        if(!routineOk()) return json(env, req, { error:'Clé invalide' }, 403);
+        const body = await req.json();
+        const pending = JSON.parse(await env.SHOPS.get('updates') || '[]');
+        const keys = ['restockOrderedAt', 'restockEta', 'restockTracking'];
+        let added = 0;
+        for(const u of (Array.isArray(body.updates) ? body.updates : []).slice(0, 200)){
+          if(!u || !u.brandId || !u.taskId || !keys.some(k=>u[k])) continue;
+          const clean = { id: 'u' + Date.now() + Math.random().toString(36).slice(2,6), brandId: String(u.brandId), taskId: String(u.taskId),
+            supplier: String(u.supplier || '').slice(0,60), ref: String(u.ref || '').slice(0,80), note: String(u.note || '').slice(0,300), at: new Date().toISOString() };
+          keys.forEach(k=>{ if(u[k]) clean[k] = String(u[k]).slice(0,120); });
+          if(pending.some(p=> p.taskId === clean.taskId && keys.every(k=> (p[k]||'') === (clean[k]||'')))) continue;
+          pending.push(clean); added++;
+        }
+        await env.SHOPS.put('updates', JSON.stringify(pending.slice(-500)));
+        if(body.lastRun) await env.SHOPS.put('routine:lastRun', String(body.lastRun));
+        return json(env, req, { ok:true, added });
+      }
+      if(url.pathname === '/updates' && req.method === 'GET'){
+        if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
+        return json(env, req, { updates: JSON.parse(await env.SHOPS.get('updates') || '[]') });
+      }
+      if(url.pathname === '/updates/ack' && req.method === 'POST'){
+        if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
+        const body = await req.json();
+        const ids = new Set(Array.isArray(body.ids) ? body.ids : []);
+        const pending = JSON.parse(await env.SHOPS.get('updates') || '[]').filter(p=> !ids.has(p.id));
+        await env.SHOPS.put('updates', JSON.stringify(pending));
+        return json(env, req, { ok:true, left: pending.length });
       }
       // Mails aux marques (rupture, commande du textile, suivi, réception, commande prête), envoyés par Brevo.
       if(url.pathname === '/mail/status' && req.method === 'GET'){
