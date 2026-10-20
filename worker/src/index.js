@@ -27,7 +27,10 @@ async function checkBrandAccess(env, req, brandId){
   if(!auth.startsWith('Bearer ')) return 'Connexion requise';
   const url = `https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/${env.BRANDS_COLLECTION}/${brandId}`;
   const r = await fetch(url, { headers: { Authorization: auth } });
-  if(r.status === 200) return null;
+  if(r.status === 200){
+    const f = ((await r.json()) || {}).fields || {};
+    return f.disabled && f.disabled.booleanValue ? 'Accès suspendu' : null;
+  }
   if(r.status === 404) return 'Marque introuvable';
   return 'Accès refusé à cette marque';
 }
@@ -45,8 +48,8 @@ async function brandEmail(env, req, brandId){
   if(!r.ok) return { error:'Marque introuvable' };
   const f = (await r.json()).fields || {};
   const owner = f.ownerEmail && f.ownerEmail.stringValue;
-  const contact = f.contact && f.contact.stringValue;
-  const email = owner || (String(contact || '').match(/[^\s<>]+@[^\s<>]+\.[a-z]{2,}/i) || [])[0] || '';
+  // Seulement l'adresse du compte de la marque (le champ « contact » est modifiable par la marque).
+  const email = /^[^\s<>@]+@[^\s<>@]+\.[a-z]{2,}$/i.test(owner || '') ? owner : '';
   const name = (f.name && f.name.stringValue) || '';
   return email ? { email, name } : { error:'Aucun email pour cette marque' };
 }
@@ -55,7 +58,8 @@ async function brandEmail(env, req, brandId){
 async function storeProducts(raw){
   const host = String(raw).trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,'');
   if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) return { error:'Adresse de boutique invalide (ex. maboutique.com)' };
-  const get = async u => { try{ const r = await fetch(u, { headers:{ 'Accept':'application/json', 'User-Agent':'Printtex/1.0' } }); return r.ok ? await r.json() : null; }catch(e){ return null; } };
+  // Réponse plafonnée à 5 Mo (boutique inconnue ou trop grosse : ignorée).
+  const get = async u => { try{ const r = await fetch(u, { headers:{ 'Accept':'application/json', 'User-Agent':'Printtex/1.0' } }); if(!r.ok) return null; const t = await r.text(); return t.length > 5000000 ? null : JSON.parse(t); }catch(e){ return null; } };
   const sp = await get(`https://${host}/products.json?limit=250`);
   if(sp && Array.isArray(sp.products)) return { platform:'shopify', storeUrl: host, products: sp.products.map(p=>({ id:String(p.id), title:p.title, image: ((p.images||[])[0]||{}).src || '' })) };
   const sub = host.endsWith('.bigcartel.com') ? host.split('.')[0] : host.split('.')[0];
@@ -63,6 +67,11 @@ async function storeProducts(raw){
   if(Array.isArray(bc)) return { platform:'bigcartel', storeUrl: host, products: bc.map(p=>({ id:String(p.id), title:p.name, image: ((p.images||[])[0]||{}).secure_url || ((p.images||[])[0]||{}).url || '' })) };
   return { error:'Boutique introuvable : vérifiez l\'adresse (Shopify ou Big Cartel).' };
 }
+
+const ID_RE = /^[A-Za-z0-9_-]{3,80}$/;
+// Numéro de suivi (lettres, chiffres, tirets) ou lien https.
+const TRACK_RE = /^([A-Za-z0-9 ._-]{4,60}|https:\/\/[^\s"'<>]{8,300})$/;
+function sameKey(a, b){ if(a.length !== b.length) return false; let x = 0; for(let i=0;i<a.length;i++) x |= a.charCodeAt(i) ^ b.charCodeAt(i); return x === 0; }
 
 async function shopify(conf, path){
   const r = await fetch(`https://${conf.shop}/admin/api/${API_VERSION}/${path}`, { headers: { 'X-Shopify-Access-Token': conf.token, 'Accept':'application/json' } });
@@ -129,7 +138,21 @@ export default {
         await env.SHOPS.put('brand:' + body.brandId, JSON.stringify({ shop, token, connectedAt: new Date().toISOString() }));
         return json(env, req, { ok:true, shop, shopName: info.shop && info.shop.name });
       }
-      const routineOk = () => env.ROUTINE_KEY && req.headers.get('X-Printtex-Key') === env.ROUTINE_KEY;
+      const routineOk = () => env.ROUTINE_KEY && sameKey(req.headers.get('X-Printtex-Key') || '', env.ROUTINE_KEY);
+      // Sauvegarde complète avant le lancement : déposée par l'admin, récupérée par la tâche locale puis effacée.
+      if(url.pathname === '/backup' && req.method === 'POST'){
+        if(!(await checkAdmin(env, req))) return json(env, req, { error:'Réservé à Printtex' }, 403);
+        const text = await req.text();
+        if(text.length > 24000000) return json(env, req, { error:'Sauvegarde trop grosse' }, 413);
+        await env.SHOPS.put('backup:latest', text, { expirationTtl: 86400 });
+        return json(env, req, { ok:true, size: text.length });
+      }
+      if(url.pathname === '/routine/backup' && req.method === 'GET'){
+        if(!routineOk()) return json(env, req, { error:'Clé invalide' }, 403);
+        const text = await env.SHOPS.get('backup:latest');
+        if(url.searchParams.get('delete') === '1'){ await env.SHOPS.delete('backup:latest'); return json(env, req, { ok:true }); }
+        return new Response(text || '{}', { headers: { 'Content-Type':'application/json; charset=utf-8' } });
+      }
       // Boutiques en ligne reliées sans application : produits lus publiquement (Shopify, Big Cartel),
       // commandes reçues en copie par mail (printtex75+commandes@gmail.com) et lues par la tâche quotidienne.
       if(url.pathname === '/store/products' && req.method === 'GET'){
@@ -162,7 +185,7 @@ export default {
         const body = await req.json();
         let added = 0;
         for(const o of (Array.isArray(body.orders) ? body.orders : []).slice(0, 200)){
-          if(!o || !o.brandId || !o.ref || !Array.isArray(o.lines) || !o.lines.length) continue;
+          if(!o || !ID_RE.test(o.brandId || '') || !o.ref || !Array.isArray(o.lines) || !o.lines.length) continue;
           const key = 'storeorders:' + o.brandId;
           const pending = JSON.parse(await env.SHOPS.get(key) || '[]');
           const ref = String(o.ref).slice(0,60);
@@ -213,7 +236,10 @@ export default {
         const keys = ['restockOrderedAt', 'restockEta', 'restockTracking'];
         let added = 0;
         for(const u of (Array.isArray(body.updates) ? body.updates : []).slice(0, 200)){
-          if(!u || !u.brandId || !u.taskId || !keys.some(k=>u[k])) continue;
+          if(!u || !ID_RE.test(u.brandId || '') || !ID_RE.test(u.taskId || '') || !keys.some(k=>u[k])) continue;
+          if(u.restockTracking && !TRACK_RE.test(String(u.restockTracking))) delete u.restockTracking;
+          ['restockOrderedAt','restockEta'].forEach(k=>{ if(u[k] && !/^\d{4}-\d{2}-\d{2}/.test(String(u[k]))) delete u[k]; });
+          if(!keys.some(k=>u[k])) continue;
           const clean = { id: 'u' + Date.now() + Math.random().toString(36).slice(2,6), brandId: String(u.brandId), taskId: String(u.taskId),
             supplier: String(u.supplier || '').slice(0,60), ref: String(u.ref || '').slice(0,80), note: String(u.note || '').slice(0,300), at: new Date().toISOString() };
           keys.forEach(k=>{ if(u[k]) clean[k] = String(u[k]).slice(0,120); });
