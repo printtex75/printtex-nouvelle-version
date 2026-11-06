@@ -49,3 +49,23 @@ Colle ce bloc **à l'intérieur** de `match /b/{bucket}/o { ... }` :
 ```
 
 Clique **Publier** après chaque collage.
+
+## Essais A/B du site printtex.fr (à coller — 06/11/2026)
+
+Firebase → Firestore Database → Règles : colle ce bloc **à l'intérieur** de `match /databases/{database}/documents { ... }`
+(par exemple juste avant la ligne `// ----- Version de test (collections beta_) -----`), puis **Publier**.
+Les visiteurs du site (non connectés) ne peuvent qu'ajouter +1 aux compteurs `vu`, `panier`, `paiement` d'un essai ; seul Printtex lit les chiffres.
+
+```
+    // ----- Essais A/B du site printtex.fr : compteurs envoyés par les visiteurs (avec consentement), lus par Printtex seulement -----
+    function abSiteOk(v) {
+      return v is map && v.keys().hasOnly(['vu', 'panier', 'paiement']);
+    }
+    match /siteAbStats/{essai} {
+      allow read: if isAdmin();
+      allow create, update: if essai.matches('^[a-z0-9_]{1,40}$')
+        && request.resource.data.keys().hasOnly(['A', 'B'])
+        && abSiteOk(request.resource.data.get('A', {}))
+        && abSiteOk(request.resource.data.get('B', {}));
+    }
+```
