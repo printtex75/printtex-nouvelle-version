@@ -816,6 +816,73 @@
     .site-picker{grid-template-columns:repeat(3,1fr);max-height:300px;}
     .shopify-products{grid-template-columns:1fr;}
   }
+  /* ---------- Essais A/B : versions B (classe ab-<essai>-B posée sur body) ---------- */
+  .tasks-notice{display:none;}
+  .date-quick{display:none;}
+  /* Essai « design » (Printtex) : finitions, une seule palette sobre */
+  body.ab-design-B{
+    --soft:#F6F6F6; --soft-2:#EFEFEF;
+    --ok-bg:#E6F2EA; --ok:#1E5631; --warn-bg:#FFF4E0; --warn:#7A4B00; --bad-bg:#FCECEA; --bad:#8C1D18;
+    --green-bg:var(--ok-bg); --green:var(--ok); --amber-bg:var(--warn-bg); --amber:var(--warn); --red-bg:var(--bad-bg);
+    font-size:14px;-webkit-font-smoothing:antialiased;
+  }
+  body.ab-design-B .overlay{background:rgba(20,18,16,0.45);}
+  body.ab-design-B header .brand-logo{height:54px;border-radius:10px;}
+  body.ab-design-B header #btnLogout{background:transparent;border:1px solid rgba(247,243,238,0.35);color:#F7F3EE;box-shadow:none;outline:none;}
+  body.ab-design-B header #btnLogout:hover{background:rgba(255,255,255,0.08);}
+  body.ab-design-B header .stat{border-radius:14px;}
+  body.ab-design-B .main-nav button.active{border-bottom-color:var(--ink);}
+  body.ab-design-B .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  body.ab-design-B .toolbar #search{flex:1 1 320px;min-width:220px;width:auto;}
+  body.ab-design-B .toolbar #sortMode{flex:0 0 auto;width:auto;}
+  body.ab-design-B .toolbar #exportMonth{flex:0 0 150px;}
+  body.ab-design-B .toolbar #btnExport, body.ab-design-B .toolbar #btnExportMonth, body.ab-design-B .toolbar #btnBackup, body.ab-design-B .toolbar #btnRestore{padding:8px 12px;font-size:12px;}
+  body.ab-design-B .toolbar #btnNew{margin-left:auto;}
+  body.ab-design-B .col{background:var(--soft);border:none;}
+  body.ab-design-B .col-head{border-bottom:1px solid var(--soft-2);}
+  body.ab-design-B .tag{border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(20,18,16,0.05);transition:box-shadow .15s ease, transform .15s ease;}
+  body.ab-design-B .tag:hover{box-shadow:0 8px 20px rgba(20,18,16,0.10);transform:translateY(-1px);}
+  body.ab-design-B .badge{border-radius:999px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:0;padding:3px 9px;}
+  body.ab-design-B .badge-method{background:var(--soft-2) !important;color:var(--ink) !important;}
+  body.ab-design-B .pay-paye{background:var(--ok-bg) !important;color:var(--ok) !important;}
+  body.ab-design-B .pay-partiel{background:var(--warn-bg) !important;color:var(--warn) !important;}
+  body.ab-design-B .pay-nonpaye{background:var(--bad-bg) !important;color:var(--bad) !important;}
+  body.ab-design-B .deadline{border-radius:999px;}
+  body.ab-design-B .dl-normal{background:var(--soft-2);color:var(--ink-2);}
+  body.ab-design-B .dl-soon{background:var(--warn-bg);color:var(--warn);}
+  body.ab-design-B .dl-over{background:var(--bad-bg);color:var(--bad);}
+  body.ab-design-B .overlay .modal{max-height:calc(100vh - 80px);overflow:auto;border-radius:18px;}
+  body.ab-design-B .overlay .modal > .modal-actions, body.ab-design-B .overlay .modal form > .modal-actions{position:sticky;bottom:0;background:var(--canvas-2);padding:12px 0 2px;border-top:1px solid var(--line);z-index:3;}
+  body.ab-design-B #notepadTab{background:#141210;border-radius:12px 12px 0 0;}
+  body.ab-design-B .quota-widget{border-radius:14px;box-shadow:0 6px 18px rgba(20,18,16,0.12);}
+  @media (max-width:640px){
+    body.ab-design-B .overlay{padding:0;}
+    body.ab-design-B .overlay .modal{max-height:100vh;min-height:100vh;border-radius:0;}
+    body.ab-design-B .toolbar #btnNew{margin-left:0;}
+  }
+  /* Essai « espace_marque » (marques) : en-tête lisible, bouton principal en cuir, contraste, grandes zones tactiles */
+  body.ab-espace_marque-B{ --thread:#8F5629; --thread-2:#7A4822; }
+  body.ab-espace_marque-B .brand-portal-header{padding:16px 24px;}
+  body.ab-espace_marque-B .brand-portal-name{font-size:20px !important;}
+  body.ab-espace_marque-B #btnShowNewOrder{background-color:#141210;background-image:var(--cuir-grain);color:#F7F3EE;outline:1px dashed var(--couture-claire);outline-offset:-4px;border:none;}
+  body.ab-espace_marque-B .task-card.out-of-stock{background:#FFF4E0;border-color:#F0D7A8;}
+  body.ab-espace_marque-B .stock-badge{background:#FFFFFF;color:#7A4B00;border:1px solid #F0D7A8;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;border-radius:999px;padding:4px 10px;display:inline-block;}
+  body.ab-espace_marque-B .badge-status{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;border-radius:999px;padding:4px 10px;}
+  body.ab-espace_marque-B :focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  @media (max-width:640px){
+    body.ab-espace_marque-B .btn, body.ab-espace_marque-B .btn-sm, body.ab-espace_marque-B #btnPortalLogout{min-height:44px;}
+    body.ab-espace_marque-B input:not([type=checkbox]):not([type=radio]), body.ab-espace_marque-B select{min-height:44px;font-size:16px;}
+    body.ab-espace_marque-B input[type=checkbox], body.ab-espace_marque-B input[type=radio]{width:22px;height:22px;}
+    body.ab-espace_marque-B .check-inline{min-height:44px;align-items:center;}
+    body.ab-espace_marque-B .task-thumb-add{width:44px;height:44px;}
+  }
+  /* Essai « confirmations » (marques) : bandeau vert qui reste affiché */
+  body.ab-confirmations-B .tasks-notice.show{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#E6F2EA;color:#1E5631;border:1px solid #BFDCC9;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:14px;font-weight:600;}
+  .tasks-notice button{background:none;border:none;color:inherit;font-size:20px;cursor:pointer;min-width:44px;min-height:44px;}
+  /* Essai « fiche_rapide » (Printtex) : dates en un clic */
+  body.ab-fiche_rapide-B .date-quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .date-quick button{border:1px solid var(--line-strong);background:#fff;border-radius:999px;padding:6px 12px;font:500 12px Inter,sans-serif;cursor:pointer;min-height:36px;}
+  .date-quick button:hover{background:#F6F6F6;}
 </style>
 </head>
 <body>
@@ -964,7 +1031,7 @@
     </div>
     <div class="params-block" style="margin-top:14px;">
       <h3>Essais A/B</h3>
-      <p class="hint">Comparer deux façons de faire dans la même appli : A = la version actuelle, B = la nouvelle. Les marques sont réparties automatiquement moitié A, moitié B ; pour Printtex, la version change chaque semaine. Les chiffres disent laquelle marche le mieux.</p>
+      <p class="hint">Comparer deux façons de faire dans la même appli : A = la version actuelle, B = la nouvelle. Les marques sont réparties automatiquement moitié A, moitié B ; pour Printtex, A et B alternent par semaines. Chaque visite est mesurée sur tout le site : commandes, statuts, erreurs, temps passé, clics. Les chiffres disent laquelle marche le mieux.</p>
       <div id="paramsAB"></div>
     </div>
   </div>
@@ -1028,6 +1095,7 @@
         <div>
           <label for="clientName">Nom du client</label>
           <input type="text" id="clientName" required placeholder="Ex. Studio Delacroix">
+          <datalist id="clientsConnus"></datalist>
         </div>
         <div>
           <label for="clientContact">Contact (tél / email)</label>
@@ -1047,6 +1115,7 @@
         <div>
           <label for="deadline">Deadline</label>
           <input type="date" id="deadline" required>
+          <div class="date-quick" aria-label="Date limite rapide"><button type="button" data-j="7">Dans 7 j</button><button type="button" data-j="10">10 j</button><button type="button" data-j="14">14 j</button><button type="button" data-j="21">21 j</button></div>
         </div>
         <div class="qty-row full" style="display:grid;grid-template-columns:1fr;gap:5px;">
           <label for="prodTime">Temps estimé de production</label>
@@ -1167,6 +1236,7 @@
     </div>
 
     <div id="tasksViewDefault">
+      <div id="tasksNotice" class="tasks-notice" role="status"><span></span><button type="button" aria-label="Fermer le message">×</button></div>
       <label class="check-inline" style="margin-bottom:10px;"><input type="checkbox" id="showDoneTasks"> Afficher les commandes déjà faites</label>
       <div id="tasksTableBody" class="task-cards-list"></div>
       <div id="tasksDoneGroups"></div>
@@ -1400,6 +1470,7 @@ STATUSES.forEach(s => {
 });
 
 function showToast(msg){
+  try{ if(/erreur|échec|impossible|non enregistr|non envoy/i.test(String(msg))) abTrackAll('erreur'); }catch(e){}
   const t = $('#toast');
   t.textContent = msg;
   t.classList.add('show');
@@ -1435,19 +1506,33 @@ function askConfirm(message, okLabel, cancelLabel){
    2. dans le code : if(abVariant('cle') === 'B'){ nouvelle version } else { version actuelle } ;
    3. compter ce qui compte : abTrack('cle', 'commande_envoyee') ;
    4. lire les chiffres dans Paramètres → Essais A/B, garder la gagnante, retirer l'autre et l'essai.
-   Répartition automatique : marques = moitié A / moitié B (fixe par marque) ; Printtex = A et B une semaine sur deux.
+   Répartition automatique : marques = moitié A / moitié B (fixe par marque) ; Printtex = A et B en alternance par semaines.
    Aperçu sans rien compter : lien ?ab=cle:B (ou ?ab=B pour tous les essais). Détails : docs/essais-ab.md */
 const AB_TESTS = {
-  /* exemple :
-  fiche_rapide: { titre:'Fiche commande rapide', description:'Moins de champs à la création', pour:'printtex', actif:true,
-                  mesures:{ commande_creee:'Commandes créées' } },
-  */
+  design: { titre:'Design de l\'atelier', pour:'printtex', actif:true,
+    description:'B : une seule palette sobre, cartes arrondies, barre d\'outils sur une ligne, boutons des fenêtres toujours visibles, touche Échap pour fermer.' },
+  fiche_rapide: { titre:'Fiche commande rapide', pour:'printtex', actif:true,
+    description:'B : clients déjà connus proposés (et leur contact repris), date limite en un clic (7, 10, 14, 21 j), dernier produit et impression retenus.' },
+  espace_marque: { titre:'Espace marque plus lisible', pour:'marques', actif:true,
+    description:'B : en-tête plus grand, bouton « Nouvelle commande » en cuir, ruptures en ambre, meilleur contraste, grandes zones tactiles sur téléphone.' },
+  confirmations: { titre:'Confirmations côté marque', pour:'marques', actif:true,
+    description:'B : bandeau vert qui reste affiché après une commande ou un produit enregistré, messages d\'erreur qui disent quoi faire.' }
 };
-if(DEMO_MODE && !Object.keys(AB_TESTS).length){
-  AB_TESTS.exemple = { titre:'Exemple (mode démo)', description:'Essai fictif pour voir à quoi ressemble ce panneau.', pour:'marques', actif:true,
-    mesures:{ commande_envoyee:'Commandes envoyées' } };
-}
-const AB_DEMO_STATS = { exemple: { A:{ vu:42, commande_envoyee:9 }, B:{ vu:39, commande_envoyee:14 } } };
+/* Mesures relevées automatiquement sur tout le site, pour chaque essai en cours (le « vu » = une visite) */
+const AB_MEASURES = {
+  commande_creee:   { label:'Commandes créées (atelier)' },
+  commande_modifiee:{ label:'Commandes modifiées' },
+  statut_avance:    { label:'Statuts avancés' },
+  commande_marque:  { label:'Commandes passées par les marques' },
+  produit_cree:     { label:'Produits créés' },
+  erreur:           { label:'Erreurs affichées', moinsMieux:true },
+  fiche_secondes:   { label:'Temps moyen pour créer une commande', moyenneDe:'commande_creee', unite:'s', moinsMieux:true },
+  commande_marque_secondes: { label:'Temps moyen pour passer une commande (marque)', moyenneDe:'commande_marque', unite:'s', moinsMieux:true }
+};
+const AB_DEMO_STATS = {
+  design: { A:{ vu:41, commande_creee:30, fiche_secondes:5400, statut_avance:88, erreur:4, clic_btnNew:35 }, B:{ vu:38, commande_creee:31, fiche_secondes:4650, statut_avance:91, erreur:2, clic_btnNew:33 } },
+  confirmations: { A:{ vu:42, commande_marque:9, commande_marque_secondes:1620, erreur:7 }, B:{ vu:39, commande_marque:14, commande_marque_secondes:2100, erreur:3 } }
+};
 let abBrandId = null;            /* posé à l'ouverture de l'espace marque */
 const abSeen = {};               /* « vu » compté une fois par chargement de page */
 function abUrlChoice(key){
@@ -1477,9 +1562,12 @@ function abAutoVariant(key){
     if(!document.body.classList.contains('role-brand') || !abBrandId) return 'A';
     return abHash(key + ':' + abBrandId) % 2 ? 'B' : 'A';
   }
-  /* Printtex : semaine paire A, impaire B (semaines du lundi au dimanche) */
+  /* Printtex : alternance par semaine (du lundi au dimanche). Chaque essai a son propre rythme
+     (1er essai : une semaine sur deux, 2e : deux semaines sur quatre…) pour que toutes les combinaisons
+     soient vécues et qu'on ne confonde pas l'effet de deux essais lancés en même temps. */
   const week = Math.floor((Date.now() / 86400000 + 3) / 7);
-  return week % 2 ? 'B' : 'A';
+  const rank = Object.keys(AB_TESTS).filter(k=> AB_TESTS[k].pour !== 'marques').indexOf(key);
+  return Math.floor(week / Math.pow(2, Math.max(0, rank))) % 2 ? 'B' : 'A';
 }
 /* Origine du choix : 'lien' (aperçu, rien n'est compté), 'appareil' (choisi dans Paramètres), 'auto' */
 function abResolve(key){
@@ -1504,15 +1592,63 @@ function abVariant(key){
   }
   return r.variant;
 }
-function abTrack(key, eventName){
+/* Les compteurs sont regroupés et envoyés toutes les 15 s (et quand on quitte la page) */
+const abPending = {};
+function abTrack(key, eventName, amount){
   if(!abCounts(key) || !db) return;
   const r = abResolve(key);
   if(r.source === 'lien') return;
   const evt = String(eventName || '').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 40);
-  if(!evt) return;
-  const inc = firebase.firestore.FieldValue.increment(1);
-  db.collection('abStats').doc(key).set({ [r.variant]: { [evt]: inc } }, { merge:true })
-    .catch(e=> console.error('Essai A/B : compteur non enregistré', key, evt, e));
+  const n = Math.round(Number(amount == null ? 1 : amount));
+  if(!evt || !(n > 0)) return;
+  const byVariant = (abPending[key] = abPending[key] || {});
+  const byEvt = (byVariant[r.variant] = byVariant[r.variant] || {});
+  byEvt[evt] = (byEvt[evt] || 0) + n;
+}
+/* Mesure valable pour tous les essais en cours (le public est filtré par abCounts) */
+function abTrackAll(eventName, amount){
+  Object.keys(AB_TESTS).forEach(k=>{ if(abCounts(k)){ abVariant(k); abTrack(k, eventName, amount); } });
+}
+function abFlush(){
+  if(!db) return;
+  Object.keys(abPending).forEach(key=>{
+    const data = {};
+    Object.entries(abPending[key]).forEach(([v, evts])=>{
+      data[v] = {};
+      Object.entries(evts).forEach(([e, n])=>{ data[v][e] = firebase.firestore.FieldValue.increment(n); });
+    });
+    delete abPending[key];
+    db.collection('abStats').doc(key).set(data, { merge:true })
+      .catch(e=> console.error('Essai A/B : compteurs non enregistrés', key, e));
+  });
+}
+setInterval(abFlush, 15000);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') abFlush(); });
+window.addEventListener('pagehide', abFlush);
+/* Clics : chaque bouton, lien ou carte touché est compté (clic_<repère>), sur tout le site */
+document.addEventListener('click', (e)=>{
+  const el = e.target && e.target.closest ? e.target.closest('button, a, [role=button], .tag, input[type=checkbox]') : null;
+  if(!el) return;
+  const name = el.id || (el.classList && el.classList[0]) || el.tagName.toLowerCase();
+  abTrackAll('clic_' + name);
+}, true);
+/* Pose sur body les classes des versions B qui concernent la personne connectée */
+function abApplyClasses(){
+  const isBrand = document.body.classList.contains('role-brand');
+  Object.keys(AB_TESTS).forEach(k=>{
+    const t = AB_TESTS[k];
+    const forMe = t.pour === 'marques' ? isBrand : !isBrand;
+    document.body.classList.toggle('ab-' + k + '-B', forMe && abVariant(k) === 'B');
+  });
+}
+function abIsB(key){ return document.body.classList.contains('ab-' + key + '-B'); }
+/* Chronos : temps passé pour créer une commande */
+const abTimers = {};
+function abStartTimer(name){ abTimers[name] = Date.now(); }
+function abStopTimer(name){
+  const t0 = abTimers[name];
+  delete abTimers[name];
+  return t0 ? Math.min(3600, Math.max(1, Math.round((Date.now() - t0) / 1000))) : 0;
 }
 async function renderParamsAB(){
   const box = $('#paramsAB');
@@ -1535,41 +1671,62 @@ async function renderParamsAB(){
         stats = snap.exists ? snap.data() : {};
       }catch(e){ statsError = e && e.message ? e.message : 'inconnue'; }
     }
-    const mesures = Object.assign({ vu:'Affichages' }, t.mesures || {});
-    Object.keys(stats.A || {}).concat(Object.keys(stats.B || {})).forEach(m=>{ if(!mesures[m]) mesures[m] = m.replace(/_/g, ' '); });
-    const nA = (stats.A && stats.A.vu) || 0, nB = (stats.B && stats.B.vu) || 0;
-    const lines = Object.keys(mesures).map(m=>{
-      const a = (stats.A && stats.A[m]) || 0, b = (stats.B && stats.B[m]) || 0;
-      if(m === 'vu') return `<tr><td>${esc(mesures[m])}</td><td>${a}</td><td>${b}</td></tr>`;
-      const ra = nA ? a / nA : 0, rb = nB ? b / nB : 0;
-      const pct = (r, n)=> n ? ` <span class="hint">(${Math.round(r * 100)} %)</span>` : '';
-      return `<tr><td>${esc(mesures[m])}</td><td class="${ra > rb ? 'best' : ''}">${a}${pct(ra, nA)}</td><td class="${rb > ra ? 'best' : ''}">${b}${pct(rb, nB)}</td></tr>`;
-    }).join('');
+    const A = stats.A || {}, B = stats.B || {};
+    const nA = A.vu || 0, nB = B.vu || 0;
+    const defs = Object.assign({}, AB_MEASURES);
+    Object.entries(t.mesures || {}).forEach(([m, label])=>{ defs[m] = { label }; });
+    const used = m => (A[m] || 0) + (B[m] || 0) > 0;
+    const cell = (val, txt, other, moinsMieux)=>{
+      const best = val != null && other != null && val !== other && (moinsMieux ? val < other : val > other);
+      return `<td class="${best ? 'best' : ''}">${txt}</td>`;
+    };
+    let lines = `<tr><td>Visites</td><td>${nA}</td><td>${nB}</td></tr>`;
+    Object.keys(defs).filter(used).forEach(m=>{
+      const d = defs[m];
+      if(d.moyenneDe){
+        const ca = A[d.moyenneDe] || 0, cb = B[d.moyenneDe] || 0;
+        const va = ca ? (A[m] || 0) / ca : null, vb = cb ? (B[m] || 0) / cb : null;
+        const fmt = v => v == null ? '—' : (v >= 90 ? Math.floor(v / 60) + ' min ' + String(Math.round(v % 60)).padStart(2, '0') : Math.round(v) + ' ' + (d.unite || ''));
+        lines += `<tr><td>${esc(d.label)}</td>${cell(va, fmt(va), vb, d.moinsMieux)}${cell(vb, fmt(vb), va, d.moinsMieux)}</tr>`;
+        return;
+      }
+      const a = A[m] || 0, b = B[m] || 0;
+      const ra = nA ? a / nA : null, rb = nB ? b / nB : null;
+      const per = r => r == null ? '' : ` <span class="hint">(${r.toFixed(1).replace('.', ',')} / visite)</span>`;
+      lines += `<tr><td>${esc(d.label)}</td>${cell(ra, a + per(ra), rb, d.moinsMieux)}${cell(rb, b + per(rb), ra, d.moinsMieux)}</tr>`;
+    });
+    const clics = [...new Set(Object.keys(A).concat(Object.keys(B)))].filter(m=> m.startsWith('clic_'))
+      .sort((x, y)=> ((A[y]||0) + (B[y]||0)) - ((A[x]||0) + (B[x]||0)));
+    const clicsHTML = clics.length ? `<details style="margin-top:6px;"><summary class="hint" style="cursor:pointer;">Détail des clics (${clics.length} repères)</summary>
+      <table class="ab-stats"><tbody>${clics.slice(0, 60).map(m=>`<tr><td>${esc(m.slice(5))}</td><td>${A[m]||0}</td><td>${B[m]||0}</td></tr>`).join('')}</tbody></table></details>` : '';
     const enough = nA >= 30 && nB >= 30;
     const r = abResolve(key);
+    if(t.pour === 'marques' && r.source === 'auto') r.variant = 'A ou B selon la marque';
     const device = abDeviceChoices()[key] || '';
-    const who = t.pour === 'marques' ? 'Marques (moitié A, moitié B)' : 'Printtex (A et B une semaine sur deux)';
-    const previewB = location.origin + location.pathname + '?ab=' + encodeURIComponent(key) + ':B';
+    const who = t.pour === 'marques' ? 'Marques (moitié A, moitié B)' : 'Printtex (A et B en alternance par semaines)';
+    const previewB = location.origin + location.pathname + (t.pour === 'marques' ? '?demo=marque&ab=' : '?ab=') + encodeURIComponent(key) + ':B';
     row.innerHTML = `
       <div class="ab-test-head">
         <div><strong>${esc(t.titre || key)}</strong>
           <span class="params-state ${t.actif ? 'on' : 'off'}">${t.actif ? 'En cours' : 'Arrêté'}</span>
           <div class="hint">${esc(t.description || '')}</div>
-          <div class="hint">Pour : ${esc(who)} · Sur cet appareil : version ${r.variant}${r.source === 'auto' ? ' (automatique)' : r.source === 'lien' ? ' (aperçu par lien, non compté)' : ' (choisie ici)'}</div>
+          <div class="hint">Pour : ${esc(who)} · Sur cet appareil : version ${r.variant}${r.source === 'auto' ? (t.pour === 'marques' ? '' : ' (automatique)') : r.source === 'lien' ? ' (aperçu par lien, non compté)' : ' (choisie ici)'}</div>
         </div>
-        <div class="ab-choice" role="group" aria-label="Version sur cet appareil">
+        ${t.pour === 'marques' ? '' : `<div class="ab-choice" role="group" aria-label="Version sur cet appareil">
           <button type="button" data-v="" class="${device ? '' : 'on'}">Auto</button>
           <button type="button" data-v="A" class="${device === 'A' ? 'on' : ''}">A</button>
           <button type="button" data-v="B" class="${device === 'B' ? 'on' : ''}">B</button>
-        </div>
+        </div>`}
       </div>
       ${statsError ? `<div class="hint" style="color:#B3261E;">Chiffres non chargés : ${esc(statsError)}</div>` : `
       <table class="ab-stats"><thead><tr><th></th><th>A (actuelle)</th><th>B (nouvelle)</th></tr></thead><tbody>${lines}</tbody></table>
-      <div class="hint" style="margin-top:6px;">${enough ? 'Assez de données pour décider : la version en vert fait mieux.' : 'Pas encore assez de données (au moins 30 affichages de chaque côté) : les chiffres restent indicatifs.'}</div>`}
-      <div class="hint" style="margin-top:6px;">Aperçu de la version B sans rien compter : <a href="javascript:void(0)" class="ab-copy">copier le lien</a></div>`;
+      ${clicsHTML}
+      <div class="hint" style="margin-top:6px;">${enough ? 'Assez de données pour décider : la version en vert fait mieux.' : 'Pas encore assez de données (au moins 30 visites de chaque côté) : les chiffres restent indicatifs.'}</div>`}
+      <div class="hint" style="margin-top:6px;">Aperçu de la version B sans rien compter${t.pour === 'marques' ? ' (espace marque de démonstration)' : ''} : <a href="javascript:void(0)" class="ab-copy">copier le lien</a></div>`;
     row.querySelectorAll('.ab-choice button').forEach(btn=> btn.addEventListener('click', ()=>{
       abSetDeviceChoice(key, btn.dataset.v);
-      showToast(btn.dataset.v ? `Version ${btn.dataset.v} sur cet appareil (recharge la page)` : 'Version automatique (recharge la page)');
+      abApplyClasses();
+      showToast(btn.dataset.v ? `Version ${btn.dataset.v} sur cet appareil` : 'Version automatique sur cet appareil');
       renderParamsAB();
     }));
     row.querySelector('.ab-copy').addEventListener('click', async ()=>{
@@ -1578,6 +1735,20 @@ async function renderParamsAB(){
     });
   }
 }
+
+/* Essai « design » (version B) : la touche Échap ferme la fenêtre du dessus, comme son bouton Annuler / Fermer */
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Escape' || !abIsB('design')) return;
+  const open = id => document.getElementById(id) && document.getElementById(id).classList.contains('open');
+  const click = id => { const b = document.getElementById(id); if(b) b.click(); };
+  if(open('confirmOverlay')) return click('confirmCancel');
+  if(open('bgOverlay')) return click('bgKeep');
+  if(open('printSizeOverlay')) return click('psCancel');
+  if(open('mockupGalleryOverlay')) return click('btnGalleryClose');
+  if(open('brandOverlay')) return click('btnBrandCancel');
+  if(open('overlay')) return closeModal();
+  if(open('tasksOverlay')) return click('btnTasksClose');
+});
 
 /* ---------- Storage (Firestore) ---------- */
 function withTimeout(promise, ms){
@@ -2093,6 +2264,7 @@ function renderKanban(list){
           await purgeOrderImages(o.id);
         }
         const r = await saveOrder(o); render();
+        if(r.ok) abTrackAll('statut_avance');
         showToast(r.ok ? (nxt === 'livree' ? 'Commande livrée et archivée (images supprimées)' : 'Statut mis à jour') : ("Échec : " + r.error));
       }
     });
@@ -2189,7 +2361,7 @@ function normalizeItemSizes(it){
   return sizes;
 }
 function newOrderItem(){
-  return { id: 'item_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), product:'T-shirt', productOther:'', blank:BLANK_OPTIONS[0], blankOther:'', sizes: emptySizesMap(), couleur:'', impression:'Sérigraphie', quantity:0, slots: emptySlots() };
+  return { id: 'item_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), product:lastChoice('product','T-shirt'), productOther:'', blank:BLANK_OPTIONS[0], blankOther:'', sizes: emptySizesMap(), couleur:'', impression:lastChoice('impression','Sérigraphie'), quantity:0, slots: emptySlots() };
 }
 function renderOrderItemsTable(){
   $('#orderItemsBody').innerHTML = currentOrderItems.map(it=>{
@@ -2407,7 +2579,40 @@ async function openModal(id){
     $('#modalTitle').textContent = 'Nouvelle commande';
     $('#modalSub').textContent = 'Renseignez les informations de la commande.';
   }
+  abStartTimer('fiche');
+  if(abIsB('fiche_rapide')){
+    fillKnownClients();
+    $('#clientName').setAttribute('list', 'clientsConnus');
+    $('#clientName').setAttribute('autocomplete', 'off');
+    setTimeout(()=>{ if(window.innerWidth > 640) $('#clientName').focus(); }, 60);
+  }else{
+    $('#clientName').removeAttribute('list');
+  }
   $('#overlay').classList.add('open');
+}
+/* Essai « fiche_rapide » (version B) : clients déjà connus, date limite en un clic, dernier choix retenu */
+function fillKnownClients(){
+  const seen = new Map();
+  orders.slice().sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||'')).forEach(o=>{
+    const n = (o.clientName||'').trim();
+    if(n && !seen.has(n.toLowerCase())) seen.set(n.toLowerCase(), o);
+  });
+  $('#clientsConnus').innerHTML = [...seen.values()].slice(0, 300).map(o=>`<option value="${esc(o.clientName)}">`).join('');
+  return seen;
+}
+$('#clientName').addEventListener('change', ()=>{
+  if(!abIsB('fiche_rapide') || currentEditId) return;
+  const o = fillKnownClients().get($('#clientName').value.trim().toLowerCase());
+  if(o && !$('#clientContact').value.trim() && o.clientContact) $('#clientContact').value = o.clientContact;
+});
+document.querySelectorAll('.date-quick button').forEach(b=> b.addEventListener('click', ()=>{
+  const d = new Date(); d.setDate(d.getDate() + Number(b.dataset.j));
+  $('#deadline').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  $('#deadline').dispatchEvent(new Event('change'));
+}));
+function lastChoice(k, def){
+  if(!abIsB('fiche_rapide')) return def;
+  try{ return localStorage.getItem('ptx_last_' + k) || def; }catch(e){ return def; }
 }
 function closeModal(){ $('#overlay').classList.remove('open'); }
 
@@ -2521,6 +2726,16 @@ $('#btnSave').addEventListener('click', async (e)=>{
     if(!orderResult.ok){
       showToast("Échec de l'enregistrement : " + orderResult.error);
       return;
+    }
+    if(wasEditing) abTrackAll('commande_modifiee');
+    else{
+      abTrackAll('commande_creee');
+      const secs = abStopTimer('fiche');
+      if(secs) abTrackAll('fiche_secondes', secs);
+      if(abIsB('fiche_rapide')){
+        const last = items[items.length - 1];
+        try{ if(last){ localStorage.setItem('ptx_last_product', last.product); localStorage.setItem('ptx_last_impression', last.impression); } }catch(e){}
+      }
     }
     const capWarn = capacityWarning(order);
     showToast(capWarn || (willBeLivree ? 'Commande livrée et archivée (images supprimées)' : (wasEditing ? 'Commande mise à jour' : 'Commande créée')));
@@ -4526,9 +4741,10 @@ $('#btnShowNewProduct').addEventListener('click', ()=>{ resetProductForm(); show
 $('#btnBackFromProduct').addEventListener('click', ()=> showTasksView('default'));
 $('#btnSaveProduct').addEventListener('click', async ()=>{
   const nom = $('#prodNom').value.trim();
-  if(!nom){ showToast('Le nom du produit est obligatoire.'); return; }
-  if(!currentSiteChoice){ showToast('Choisissez le vêtement utilisé (ou « apporté par le client »).'); return; }
-  if(currentSiteChoice === 'autre' && !$('#siteOtherName').value.trim()){ showToast('Précisez le nom du vêtement.'); return; }
+  const confB = abIsB('confirmations');
+  if(!nom){ showToast(confB ? 'Produit non enregistré : indiquez son nom.' : 'Le nom du produit est obligatoire.'); return; }
+  if(!currentSiteChoice){ showToast(confB ? 'Produit non enregistré : choisissez le vêtement utilisé (ou « apporté par le client »).' : 'Choisissez le vêtement utilisé (ou « apporté par le client »).'); return; }
+  if(currentSiteChoice === 'autre' && !$('#siteOtherName').value.trim()){ showToast(confB ? 'Produit non enregistré : précisez le nom du vêtement.' : 'Précisez le nom du vêtement.'); return; }
   const id = currentEditProductId || ('prod_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
   const btn = $('#btnSaveProduct');
   btn.disabled = true; btn.textContent = 'Enregistrement…';
@@ -4558,7 +4774,12 @@ $('#btnSaveProduct').addEventListener('click', async ()=>{
   const wasEditing = !!currentEditProductId;
   resetProductForm();
   showToast(wasEditing ? 'Produit mis à jour' : 'Produit créé');
+  if(!wasEditing){
+    abTrackAll('produit_cree');
+    if(isBrandView() && abIsB('confirmations')) showTasksNotice(`Produit « ${product.nom} » enregistré dans votre catalogue.`);
+  }
   if(!wasEditing && isBrandView() && await askConfirm('Produit créé. Voulez-vous le commander maintenant ?', 'Commander maintenant', 'Plus tard')){
+    abStartTimer('commande_marque');
     showTasksView('newOrder'); renderOrderCatalog();
   }
 });
@@ -4606,7 +4827,15 @@ async function renderOrderCatalog(){
   $('#orderCatalog').querySelectorAll('.order-cat-size-input').forEach(i=> i.addEventListener('input', majTotal));
   majTotal();
 }
-$('#btnShowNewOrder').addEventListener('click', async ()=>{ showTasksView('newOrder'); await renderOrderCatalog(); });
+$('#btnShowNewOrder').addEventListener('click', async ()=>{ abStartTimer('commande_marque'); showTasksView('newOrder'); await renderOrderCatalog(); });
+/* Essai « confirmations » (version B) : bandeau vert en haut du suivi, qui reste tant qu'on ne le ferme pas */
+function showTasksNotice(msg){
+  const box = $('#tasksNotice');
+  if(!box) return;
+  box.querySelector('span').textContent = msg;
+  box.classList.add('show');
+  box.querySelector('button').onclick = ()=> box.classList.remove('show');
+}
 $('#btnBackFromOrder').addEventListener('click', ()=> showTasksView('default'));
 $('#btnCreateOrderFromCatalog').addEventListener('click', async ()=>{
   const cards = $('#orderCatalog').querySelectorAll('.order-cat-card');
@@ -4619,7 +4848,8 @@ $('#btnCreateOrderFromCatalog').addEventListener('click', async ()=>{
       if(qty > 0) toCreate.push({ product:p, qty, taille: input.dataset.size, couleur: input.dataset.color || p.couleurs || '' });
     });
   });
-  if(!toCreate.length){ showToast('Indiquez au moins une quantité.'); return; }
+  const confB = abIsB('confirmations');
+  if(!toCreate.length){ showToast(confB ? 'Commande non envoyée : indiquez au moins une quantité.' : 'Indiquez au moins une quantité.'); return; }
   const total = toCreate.reduce((a,x)=>a+x.qty, 0);
   const groupes = {};
   toCreate.forEach(x=>{ const k = x.product.nom + (x.couleur ? ' · ' + x.couleur : ''); (groupes[k] = groupes[k] || []).push(x); });
@@ -4627,7 +4857,7 @@ $('#btnCreateOrderFromCatalog').addEventListener('click', async ()=>{
   const note = $('#orderNote').value.trim();
   const recap = Object.entries(groupes).map(([k, xs])=> `- ${k} : ${xs.map(x=> (x.taille || 'taille unique') + ' × ' + x.qty).join(', ')} (${xs.reduce((a,x)=>a+x.qty,0)})`).join('\n');
   const ok = await askConfirm(`Votre commande :\n${recap}\n\nTotal : ${total} pièce(s)${wanted ? '\nDate souhaitée : ' + formatDate(wanted) : ''}${note ? '\nRemarque : ' + note : ''}`, 'Valider la commande', 'Modifier');
-  if(!ok) return;
+  if(!ok){ if(confB) showToast('Commande pas encore envoyée : vérifiez, puis cliquez « Valider la commande ».'); return; }
   const orderRef = 'C' + Date.now().toString(36).toUpperCase().slice(-6);
   const btn = $('#btnCreateOrderFromCatalog');
   btn.disabled = true; btn.textContent = 'Création…';
@@ -4656,6 +4886,10 @@ $('#btnCreateOrderFromCatalog').addEventListener('click', async ()=>{
   showTasksView('default');
   $('#orderWanted').value = ''; $('#orderNote').value = '';
   showToast(`Commande enregistrée : ${total} pièce(s)`);
+  abTrackAll('commande_marque');
+  const secs = abStopTimer('commande_marque');
+  if(secs) abTrackAll('commande_marque_secondes', secs);
+  if(confB) showTasksNotice(`Commande enregistrée : ${total} pièce(s). Printtex l'a bien reçue, vous la retrouvez ci-dessous.`);
 });
 
 const TASK_SIZES = ['', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'OS'];
@@ -5374,6 +5608,7 @@ function showApp(){
   $('#authGate').style.display = 'none';
   $('#appRoot').style.display = 'block';
   $('#notepadTab').style.display = 'block';
+  abApplyClasses();
   loadAdminNote();
 }
 function showAuthGate(){
@@ -5386,6 +5621,7 @@ function showAuthGate(){
   $('#notepadTab').style.display = 'none';
   $('#notepadPanel').style.display = 'none';
   orders = []; brands = []; brandsLoaded = false;
+  [...document.body.classList].filter(c=> c.startsWith('ab-')).forEach(c=> document.body.classList.remove(c));
 }
 async function findBrandByOwner(uid){
   if(!db) return { brand:null, error:'Firebase non configuré' };
@@ -5404,6 +5640,7 @@ async function showBrandPortal(brand){
   $('#brandPortalName').textContent = brand.name;
   brands = [brand];
   abBrandId = brand.id;
+  abApplyClasses();
   loadSiteCatalog();
   await openTasksModal(brand.id);
   importShopifyForCurrentBrand(false);
