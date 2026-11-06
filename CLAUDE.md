@@ -13,6 +13,7 @@ Application de gestion d'un atelier de personnalisation textile. Lis le README a
 - `main` déploie le site en ligne immédiatement (GitHub Pages). On n'y pousse jamais directement : une branche par sujet, une pull request, relecture avant fusion.
 - Une idée de la boîte à idées (page `idees.html`, collection Firestore `idees`) se code sur la branche `idee-<id court>` et sa PR s'intitule « Idée : <titre> ». Le chef seul autorise un lancement, depuis sa session Claude Code. Le script `scripts/idees-firestore.mjs` lit et met à jour les idées (variable `FIREBASE_SERVICE_ACCOUNT`).
 - Reste dans le périmètre de l'idée et de son analyse : pas de refonte, pas de dépendance ajoutée.
+- Essais : ne plus copier l'appli dans un `essai-xxx.html`. Un essai se fait en A/B dans `index.html` (section `Essais A/B`, `AB_TESTS`, `abVariant`, `abTrack`) ; méthode dans `docs/essais-ab.md`. Une fois la gagnante choisie, retirer l'autre version et l'essai.
 
 ## Contexte fonctionnel (ajouté le 18/10/2026)
 L'utilisateur (printtex75@gmail.com, artisan non développeur) parle français : répondre en français, simplement et brièvement. Les règles de branches ci-dessus priment sur tout le reste.

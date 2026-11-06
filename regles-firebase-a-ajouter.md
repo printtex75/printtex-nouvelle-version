@@ -13,6 +13,11 @@ Colle ce bloc **à l'intérieur** de `match /databases/{database}/documents { ..
     }
     match /beta_orders/{id=**} { allow read, write: if betaAdmin(); }
     match /beta_adminNotes/{id} { allow read, write: if betaAdmin(); }
+    // Essais A/B : chaque compte connecté ajoute ses compteurs, seul Printtex lit les chiffres
+    match /beta_abStats/{id} {
+      allow read: if betaAdmin();
+      allow create, update: if request.auth != null;
+    }
     match /beta_brands/{brandId} {
       allow read, update, delete: if betaAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
