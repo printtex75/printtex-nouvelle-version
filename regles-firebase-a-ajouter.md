@@ -14,9 +14,10 @@ Colle ce bloc **à l'intérieur** de `match /databases/{database}/documents { ..
     match /beta_orders/{id=**} { allow read, write: if betaAdmin(); }
     match /beta_adminNotes/{id} { allow read, write: if betaAdmin(); }
     // Essais A/B : chaque compte connecté ajoute ses compteurs, seul Printtex lit les chiffres
+    // (déjà publiée dans la console le 06/11/2026)
     match /beta_abStats/{id} {
       allow read: if betaAdmin();
-      allow create, update: if request.auth != null;
+      allow create, update: if request.auth != null && request.resource.data.keys().hasOnly(['A', 'B']);
     }
     match /beta_brands/{brandId} {
       allow read, update, delete: if betaAdmin()
