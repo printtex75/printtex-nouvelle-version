@@ -1,3 +1,5 @@
+> **06/11/2026 : les essais A/B servent au site printtex.fr** (voir `site-ab/README.md`). Dans l'outil de gestion, les 4 essais ci-dessous sont arrêtés (`actif:false`).
+
 # Essais A/B — notre façon de tester une amélioration
 
 Avant : chaque essai était une copie complète de l'appli (`essai-design.html`, `essai-conf.html`…), qu'on regardait puis qu'on supprimait. Difficile à comparer, et rien n'était mesuré.

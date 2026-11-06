@@ -1,0 +1,8 @@
+{%- comment -%}
+  Essais A/B du site (06/11/2026) : script assets/printtex-ab.js (consentement statistiques, moitié A / moitié B,
+  compteurs dans Firestore siteAbStats, achats retrouvés par l'attribut de panier caché _ab).
+  Rendu depuis snippets/printtex-clarity.liquid (même règle : jamais dans l'éditeur de thème).
+  Le paramètre d'aperçu ?ab= est lu ici, avant que le thème ne réécrive l'adresse avec ?variant=.
+{%- endcomment -%}
+<script>window.PTX_AB_LIEN = new URLSearchParams(location.search).get('ab');</script>
+<script src="{{ 'printtex-ab.js' | asset_url }}" defer></script>
