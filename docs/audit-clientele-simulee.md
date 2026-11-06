@@ -134,3 +134,7 @@ Prix de la broderie (toujours « sur devis »), lavage à 60 °C, facture au nom
 2. Mesurer avec les essais A/B (`site-ab/`), en commençant par le premier écran de l'accueil sur téléphone.
 3. Lancer C1 (paiement individuel) et 2 ou 3 pages par besoin.
 4. Refaire passer les mêmes agents après les corrections pour comparer.
+
+## Suivi (06/11/2026)
+- Liste des travaux transmise à la session chef (elle publie le thème ; sessions Outil et Design).
+- 3 pages créées **non publiées** dans Shopify, à relire avant publication : `t-shirt-hommage-personnalise`, `merch-createurs-streamers-artistes`, `sweat-de-promo-bde`. Elles ne contiennent que des informations déjà présentes sur le site.
