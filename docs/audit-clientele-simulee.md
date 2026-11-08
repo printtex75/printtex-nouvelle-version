@@ -137,4 +137,6 @@ Prix de la broderie (toujours « sur devis »), lavage à 60 °C, facture au nom
 
 ## Suivi (06/11/2026)
 - Liste des travaux transmise à la session chef (elle publie le thème ; sessions Outil et Design).
-- 3 pages créées **non publiées** dans Shopify, à relire avant publication : `t-shirt-hommage-personnalise`, `merch-createurs-streamers-artistes`, `sweat-de-promo-bde`. Elles ne contiennent que des informations déjà présentes sur le site.
+- 3 pages créées dans Shopify puis **publiées le 08/11/2026** (accord de Karim) : `t-shirt-hommage-personnalise`, `merch-createurs-streamers-artistes`, `sweat-de-promo-bde`. Elles ne contiennent que des informations déjà présentes sur le site.
+- Vérification quotidienne programmée (10 h 37) : site en ligne et dernier brouillon, sur iPhone simulé.
+- Plan d'essai Google Ads : `google-ads-plan.md`.
